@@ -1,0 +1,53 @@
+"use client"
+
+import { useState } from "react"
+import { Sidebar } from "@/components/sidebar"
+import { MainContent } from "@/components/main-content"
+import { ActivityDrawer } from "@/components/activity-drawer"
+import type { Activity } from "@/types/activity"
+
+export default function XCaliberControlPanel() {
+  const [selectedPod, setSelectedPod] = useState("prod-east")
+  const [selectedTenant, setSelectedTenant] = useState("tenant-1")
+  const [selectedPodService, setSelectedPodService] = useState("overview")
+  const [selectedTab, setSelectedTab] = useState("overview")
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+
+  const handleActivitySelect = (activity: Activity) => {
+    setSelectedActivity(activity)
+    setIsDrawerOpen(true)
+  }
+
+  const handleDrawerClose = () => {
+    setIsDrawerOpen(false)
+    setSelectedActivity(null)
+  }
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar
+        selectedPod={selectedPod}
+        onPodSelect={setSelectedPod}
+        selectedTenant={selectedTenant}
+        onTenantSelect={setSelectedTenant}
+        selectedService={selectedPodService}
+        onServiceSelect={setSelectedPodService}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={setIsSidebarCollapsed}
+      />
+
+      <MainContent
+        selectedPod={selectedPod}
+        selectedTenant={selectedTenant}
+        selectedService={selectedPodService}
+        selectedTab={selectedTab}
+        onTabSelect={setSelectedTab}
+        onActivitySelect={handleActivitySelect}
+      />
+
+      <ActivityDrawer activity={selectedActivity} isOpen={isDrawerOpen} onClose={handleDrawerClose} />
+    </div>
+  )
+}
