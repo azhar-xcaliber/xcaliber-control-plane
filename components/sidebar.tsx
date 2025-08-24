@@ -1,9 +1,7 @@
 "use client"
-
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,16 +19,13 @@ import {
   LogOut,
   Activity,
   Code,
+  FileText,
   Workflow,
   Bot,
-  ChevronDown,
-  ChevronRight,
-  Plus,
-  Shield,
+  Globe,
   Database,
+  MessageSquare,
   BarChart3,
-  BookOpen,
-  Layers,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -45,7 +40,7 @@ interface SidebarProps {
   onToggleCollapse: (collapsed: boolean) => void
 }
 
-// Pod workspaces (environments) - top level
+// Pod workspaces (environments)
 const pods = [
   {
     id: "prod-east",
@@ -81,30 +76,51 @@ const pods = [
   },
 ]
 
-// Tenants grouped under the selected pod
-const tenantGroups = [
-  { id: "tenant-1", name: "Acme Corp", plan: "Enterprise", online: true },
-  { id: "tenant-2", name: "TechStart Inc", plan: "Professional", online: false },
-  { id: "tenant-3", name: "Global Systems", plan: "Enterprise", online: true },
-  { id: "tenant-4", name: "StartupCo", plan: "Starter", online: true },
+// Tenants for selector
+const tenants = [
+  { id: "tenant-1", name: "Acme Corp", plan: "Enterprise" },
+  { id: "tenant-2", name: "TechStart Inc", plan: "Professional" },
+  { id: "tenant-3", name: "Global Systems", plan: "Enterprise" },
+  { id: "tenant-4", name: "StartupCo", plan: "Starter" },
 ]
 
-// Monitor and Manage section
-const monitorManageItems = [
-  { id: "overview", label: "Overview", icon: Home },
-  { id: "activity", label: "Activity Feed", icon: Activity },
-  { id: "data-quality", label: "Data Quality", icon: Shield },
-  { id: "operations", label: "Operations", icon: Settings },
-  { id: "data-sources", label: "Data Sources", icon: Database },
-  { id: "hdf", label: "HDF", icon: BarChart3 },
-]
-
-// Browse and Design section (Studios)
-const browseDesignItems = [
-  { id: "data-access", label: "Data Access", icon: Code },
-  { id: "data-catalog", label: "Data Catalog", icon: BookOpen },
-  { id: "workflows", label: "Workflows", icon: Workflow },
-  { id: "agents", label: "Agents", icon: Bot },
+const navigationBuckets = [
+  {
+    id: "platform-components",
+    label: "Platform Components",
+    icon: Home,
+    items: [
+      { id: "overview", label: "Home", icon: Home },
+      { id: "data-sources", label: "Data Sources", icon: Database },
+      { id: "channels", label: "Data Channels", icon: Globe },
+      { id: "hdf", label: "Healthcare Data Factory (HDF)", icon: FileText },
+      { id: "data-fabric", label: "Healthcare Data Fabric", icon: Activity },
+      { id: "data-access", label: "Data Access", icon: Code },
+      { id: "agents", label: "Agents", icon: Bot },
+      { id: "workflows", label: "Workflows", icon: Workflow },
+    ],
+  },
+  {
+    id: "co-pilots",
+    label: "Co-pilots",
+    icon: Bot,
+    items: [
+      { id: "playground", label: "Playground", icon: Code },
+      { id: "provider-assistant", label: "Provider Assistant", icon: MessageSquare },
+      { id: "analyst", label: "Analyst", icon: BarChart3 },
+    ],
+  },
+  {
+    id: "enterprise-integrations",
+    label: "Enterprise Integrations",
+    icon: Globe,
+    items: [
+      { id: "kafka-queues", label: "Kafka Queues", icon: Activity },
+      { id: "data-lakes", label: "Data Lakes", icon: Database },
+      { id: "crm-systems", label: "CRM Systems", icon: Building2 },
+      { id: "external-databases", label: "External Databases", icon: Database },
+    ],
+  },
 ]
 
 export function Sidebar({
@@ -117,12 +133,8 @@ export function Sidebar({
   isCollapsed,
   onToggleCollapse,
 }: SidebarProps) {
-  const [tenantsCollapsed, setTenantsCollapsed] = useState(false)
-  const [monitorManageCollapsed, setMonitorManageCollapsed] = useState(false)
-  const [browseDesignCollapsed, setBrowseDesignCollapsed] = useState(false)
-
   const currentPod = pods.find((pod) => pod.id === selectedPod)
-  const currentTenant = tenantGroups.find((tenant) => tenant.id === selectedTenant)
+  const currentTenant = tenants.find((tenant) => tenant.id === selectedTenant)
 
   return (
     <div className="flex h-full">
@@ -175,219 +187,111 @@ export function Sidebar({
               <Menu className="w-4 h-4" />
             </Button>
           </div>
+
+          {/* Tenant Selector */}
+          {!isCollapsed && (
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Active Tenant</label>
+              <Select value={selectedTenant} onValueChange={onTenantSelect}>
+                <SelectTrigger className="w-full">
+                  <SelectValue>
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4" />
+                      <span className="truncate">{currentTenant?.name}</span>
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {tenants.map((tenant) => (
+                    <SelectItem key={tenant.id} value={tenant.id}>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4" />
+                          <span>{tenant.name}</span>
+                        </div>
+                        <Badge variant="secondary" className="ml-2 text-xs">
+                          {tenant.plan}
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
-        {/* Navigation Content */}
+        {/* Navigation Buckets */}
         <div className="flex-1 overflow-y-auto">
-          {!isCollapsed ? (
-            <div className="p-3 space-y-4">
-              {/* Tenants Section - Shadcn Sidebar Header Style */}
-              <div>
-                <div className="px-2 py-1">
-                  <div className="flex items-center justify-between">
-                    <Button
-                      variant="ghost"
-                      className="flex-1 justify-start p-2 h-auto font-medium text-gray-700 hover:bg-gray-100"
-                      onClick={() => setTenantsCollapsed(!tenantsCollapsed)}
-                    >
-                      {tenantsCollapsed ? (
-                        <ChevronRight className="w-4 h-4 mr-2" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 mr-2" />
-                      )}
-                      <Building2 className="w-4 h-4 mr-2" />
-                      Tenants
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 opacity-60 hover:opacity-100"
-                      title="Add tenant"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
+          <div className="p-3">
+            <nav className="space-y-2">
+              {navigationBuckets.map((bucket) => {
+                const BucketIcon = bucket.icon
+                const isExpanded = !isCollapsed // For now, expand when sidebar is expanded
 
-                {!tenantsCollapsed && (
-                  <div className="px-2 pb-2">
-                    {/* Current Selected Tenant Header */}
-                    {currentTenant && (
-                      <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <div
+                return (
+                  <div key={bucket.id}>
+                    {/* Bucket Header */}
+                    <div
+                      className={cn(
+                        "flex items-center gap-2 px-2 py-2 text-sm font-medium text-gray-700",
+                        isCollapsed && "justify-center",
+                      )}
+                    >
+                      <BucketIcon className="w-4 h-4 text-gray-500" />
+                      {!isCollapsed && <span>{bucket.label}</span>}
+                    </div>
+
+                    {/* Bucket Items */}
+                    {isExpanded && !isCollapsed && (
+                      <div className="ml-4 space-y-1 border-l border-gray-200 pl-3">
+                        {bucket.items.map((item) => {
+                          const ItemIcon = item.icon
+                          return (
+                            <Button
+                              key={item.id}
+                              variant={selectedService === item.id ? "secondary" : "ghost"}
                               className={cn(
-                                "w-2 h-2 rounded-full flex-shrink-0",
-                                currentTenant.online ? "bg-green-500" : "bg-gray-300",
+                                "w-full h-8 px-2 justify-start text-sm",
+                                selectedService === item.id && "bg-blue-50 text-blue-700 border-blue-200",
                               )}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm text-gray-900 truncate">{currentTenant.name}</div>
-                              <div className="text-xs text-gray-500">{currentTenant.plan}</div>
-                            </div>
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                <MoreHorizontal className="w-3 h-3" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem>
-                                <Settings className="w-4 h-4 mr-2" />
-                                Tenant Settings
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Activity className="w-4 h-4 mr-2" />
-                                View Activity
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem>
-                                <Building2 className="w-4 h-4 mr-2" />
-                                Switch Tenant
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                              onClick={() => onServiceSelect(item.id)}
+                            >
+                              <ItemIcon className="w-3 h-3 mr-2 flex-shrink-0" />
+                              <span className="truncate">{item.label}</span>
+                            </Button>
+                          )
+                        })}
                       </div>
                     )}
 
-                    {/* Other Tenants List */}
-                    <div className="space-y-1">
-                      <div className="text-xs font-medium text-gray-500 px-2 py-1">Other Tenants</div>
-                      {tenantGroups
-                        .filter((tenant) => tenant.id !== selectedTenant)
-                        .map((tenant) => (
-                          <Button
-                            key={tenant.id}
-                            variant="ghost"
-                            className="w-full justify-start px-2 py-1.5 h-auto text-sm hover:bg-gray-100"
-                            onClick={() => onTenantSelect(tenant.id)}
-                          >
-                            <div
+                    {/* Collapsed state - show bucket items as tooltips */}
+                    {isCollapsed && (
+                      <div className="space-y-1">
+                        {bucket.items.map((item) => {
+                          const ItemIcon = item.icon
+                          return (
+                            <Button
+                              key={item.id}
+                              variant={selectedService === item.id ? "secondary" : "ghost"}
                               className={cn(
-                                "w-2 h-2 rounded-full mr-2 flex-shrink-0",
-                                tenant.online ? "bg-green-500" : "bg-gray-300",
+                                "w-full h-8 px-2 justify-center",
+                                selectedService === item.id && "bg-blue-50 text-blue-700 border-blue-200",
                               )}
-                            />
-                            <span className="truncate flex-1 text-left">{tenant.name}</span>
-                            <Badge variant="outline" className="text-xs ml-2">
-                              {tenant.plan}
-                            </Badge>
-                          </Button>
-                        ))}
-                    </div>
+                              onClick={() => onServiceSelect(item.id)}
+                              title={item.label}
+                            >
+                              <ItemIcon className="w-3 h-3" />
+                            </Button>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Monitor and Manage Section */}
-              {selectedTenant && (
-                <div>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start p-2 h-auto font-medium text-gray-700"
-                    onClick={() => setMonitorManageCollapsed(!monitorManageCollapsed)}
-                  >
-                    {monitorManageCollapsed ? (
-                      <ChevronRight className="w-4 h-4 mr-2" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 mr-2" />
-                    )}
-                    <Activity className="w-4 h-4 mr-2" />
-                    Monitor & Manage
-                  </Button>
-
-                  {!monitorManageCollapsed && (
-                    <div className="ml-6 mt-2 space-y-1">
-                      {monitorManageItems.map((item) => {
-                        const Icon = item.icon
-                        return (
-                          <Button
-                            key={item.id}
-                            variant={selectedService === item.id ? "secondary" : "ghost"}
-                            className={cn(
-                              "w-full justify-start px-2 py-1.5 h-auto text-sm",
-                              selectedService === item.id && "bg-blue-50 text-blue-700",
-                            )}
-                            onClick={() => onServiceSelect(item.id)}
-                          >
-                            <Icon className="w-4 h-4 mr-2" />
-                            {item.label}
-                          </Button>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <Separator />
-
-              {/* Browse and Design Section */}
-              {selectedTenant && (
-                <div>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start p-2 h-auto font-medium text-gray-700"
-                    onClick={() => setBrowseDesignCollapsed(!browseDesignCollapsed)}
-                  >
-                    {browseDesignCollapsed ? (
-                      <ChevronRight className="w-4 h-4 mr-2" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 mr-2" />
-                    )}
-                    <Layers className="w-4 h-4 mr-2" />
-                    Browse & Design
-                  </Button>
-
-                  {!browseDesignCollapsed && (
-                    <div className="ml-6 mt-2 space-y-1">
-                      {browseDesignItems.map((item) => {
-                        const Icon = item.icon
-                        return (
-                          <Button
-                            key={item.id}
-                            variant={selectedService === item.id ? "secondary" : "ghost"}
-                            className={cn(
-                              "w-full justify-start px-2 py-1.5 h-auto text-sm",
-                              selectedService === item.id && "bg-blue-50 text-blue-700",
-                            )}
-                            onClick={() => onServiceSelect(item.id)}
-                          >
-                            <Icon className="w-4 h-4 mr-2" />
-                            {item.label}
-                          </Button>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            /* Collapsed view - just icons */
-            <div className="p-3 space-y-2">
-              <Button variant="ghost" className="w-full h-10 p-0" title="Tenants">
-                <Building2 className="w-4 h-4" />
-              </Button>
-
-              {selectedTenant && (
-                <>
-                  <Button variant="ghost" className="w-full h-10 p-0" title="Monitor & Manage">
-                    <Activity className="w-4 h-4" />
-                  </Button>
-
-                  <Button variant="ghost" className="w-full h-10 p-0" title="Browse & Design">
-                    <Layers className="w-4 h-4" />
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
+                )
+              })}
+            </nav>
+          </div>
         </div>
 
         {/* Footer with Logged In User */}
