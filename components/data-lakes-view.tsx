@@ -1,184 +1,192 @@
 "use client"
+import { ComponentLayout } from "@/components/component-layout"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Database, HardDrive, TrendingUp, Activity } from "lucide-react"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Database, Plus, Settings, CheckCircle, AlertTriangle, HardDrive, TrendingUp } from "lucide-react"
-
-const mockDataLakes = [
+const mockDataLakeActivityData = [
   {
-    id: "dl-001",
-    name: "Snowflake Healthcare Warehouse",
-    type: "Snowflake",
-    status: "connected",
-    dataVolume: "2.4TB",
-    dailyIngestion: "45GB",
-    tables: 156,
-    description: "Primary data warehouse for healthcare analytics and reporting",
+    id: "act_dl_001",
+    timestamp: new Date(Date.now() - 1000 * 60 * 12),
+    type: "success" as const,
+    action: "Data Lake Sync Completed",
+    description: "Successfully synchronized patient data to Snowflake data lake",
+    user: "system",
+    metadata: { dataLake: "snowflake-prod", recordsSynced: 45000, duration: "12m 34s" },
   },
   {
-    id: "dl-002",
-    name: "Databricks ML Platform",
-    type: "Databricks",
-    status: "connected",
-    dataVolume: "1.8TB",
-    dailyIngestion: "32GB",
-    tables: 89,
-    description: "Machine learning and advanced analytics platform",
+    id: "act_dl_002",
+    timestamp: new Date(Date.now() - 1000 * 60 * 28),
+    type: "warning" as const,
+    action: "Storage Threshold Exceeded",
+    description: "Databricks data lake approaching storage capacity limit",
+    user: "system",
+    metadata: { dataLake: "databricks-analytics", currentUsage: "2.1TB", limit: "2.5TB" },
   },
   {
-    id: "dl-003",
-    name: "AWS S3 Data Lake",
-    type: "AWS S3",
-    status: "syncing",
-    dataVolume: "5.2TB",
-    dailyIngestion: "78GB",
-    tables: 234,
-    description: "Raw data storage and archival system",
+    id: "act_dl_003",
+    timestamp: new Date(Date.now() - 1000 * 60 * 55),
+    type: "info" as const,
+    action: "Query Performance Optimized",
+    description: "Applied indexing optimizations to improve query performance",
+    user: "data.engineer@hospital.com",
+    metadata: { dataLake: "bigquery-warehouse", tablesOptimized: 8, performanceGain: "35%" },
+  },
+]
+
+const mockDataLakeTasksData = [
+  {
+    id: "task_dl_001",
+    title: "Expand Databricks Storage",
+    description: "Increase storage capacity for Databricks analytics data lake",
+    status: "pending" as const,
+    priority: "high" as const,
+    assignee: "infrastructure@hospital.com",
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6),
+    tags: ["storage", "databricks", "capacity"],
+  },
+  {
+    id: "task_dl_002",
+    title: "Implement Data Archival Policy",
+    description: "Set up automated archival for old data in Snowflake data lake",
+    status: "in-progress" as const,
+    priority: "medium" as const,
+    assignee: "data.governance@hospital.com",
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
+    tags: ["archival", "governance", "snowflake"],
+  },
+]
+
+const mockDataLakeConfigData = [
+  {
+    id: "config_dl_001",
+    name: "Sync Frequency",
+    type: "string",
+    value: "hourly",
+    description: "Frequency of data synchronization to data lakes",
+    category: "Synchronization",
+    isEditable: true,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
+    modifiedBy: "data.engineer@hospital.com",
+    defaultValue: "daily",
+  },
+  {
+    id: "config_dl_002",
+    name: "Enable Data Encryption",
+    type: "boolean",
+    value: true,
+    description: "Encrypt data at rest in all connected data lakes",
+    category: "Security",
+    isEditable: false,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
+    modifiedBy: "security@hospital.com",
+    defaultValue: true,
+  },
+  {
+    id: "config_dl_003",
+    name: "Retention Period",
+    type: "string",
+    value: "7 years",
+    description: "Data retention period for healthcare records",
+    category: "Compliance",
+    isEditable: true,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 90),
+    modifiedBy: "compliance@hospital.com",
+    defaultValue: "5 years",
   },
 ]
 
 export function DataLakesView() {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "connected":
-        return "bg-green-100 text-green-700"
-      case "syncing":
-        return "bg-blue-100 text-blue-700"
-      case "error":
-        return "bg-red-100 text-red-700"
-      default:
-        return "bg-gray-100 text-gray-700"
-    }
+  const handleRefresh = () => {
+    console.log("Refreshing data lakes...")
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "connected":
-        return <CheckCircle className="w-4 h-4" />
-      case "syncing":
-        return <TrendingUp className="w-4 h-4" />
-      case "error":
-        return <AlertTriangle className="w-4 h-4" />
-      default:
-        return <Database className="w-4 h-4" />
-    }
-  }
+  const dashboardContent = (
+    <div className="p-6 space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Connected Lakes</p>
+                <p className="text-2xl font-bold text-gray-900">5</p>
+              </div>
+              <Database className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
 
-  const getTypeIcon = (type: string) => {
-    return <Database className="w-5 h-5 text-blue-600" />
-  }
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Storage</p>
+                <p className="text-2xl font-bold text-purple-600">2.4TB</p>
+              </div>
+              <HardDrive className="w-8 h-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Daily Growth</p>
+                <p className="text-2xl font-bold text-green-600">12GB</p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Query Volume</p>
+                <p className="text-2xl font-bold text-blue-600">8.2K</p>
+              </div>
+              <Activity className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Data Lakes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Enterprise Data Lake Integration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Database className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <div className="text-gray-500 mb-4">Data lake connections and management</div>
+            <div className="text-sm text-gray-400">
+              Connect to Snowflake, Databricks, and other enterprise data lakes for unified data access.
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Data Lakes</h2>
-            <p className="text-sm text-gray-500">Manage connections to Snowflake, Databricks, and other data lakes</p>
-          </div>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Data Lake
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Connected Lakes</p>
-                  <p className="text-2xl font-bold text-gray-900">{mockDataLakes.length}</p>
-                </div>
-                <Database className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Data Volume</p>
-                  <p className="text-2xl font-bold text-green-600">9.4TB</p>
-                </div>
-                <HardDrive className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Daily Ingestion</p>
-                  <p className="text-2xl font-bold text-blue-600">155GB</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Tables</p>
-                  <p className="text-2xl font-bold text-gray-900">479</p>
-                </div>
-                <Database className="w-8 h-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Data Lakes List */}
-        <div className="space-y-4">
-          {mockDataLakes.map((lake) => (
-            <Card key={lake.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="p-2 bg-blue-100 rounded-lg">{getTypeIcon(lake.type)}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900">{lake.name}</h3>
-                        <Badge variant="outline" className="text-xs">
-                          {lake.type}
-                        </Badge>
-                        <Badge className={getStatusColor(lake.status)}>
-                          {getStatusIcon(lake.status)}
-                          <span className="ml-1">{lake.status}</span>
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">{lake.description}</p>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">Data Volume:</span>
-                          <span className="ml-2 font-medium">{lake.dataVolume}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Daily Ingestion:</span>
-                          <span className="ml-2 font-medium">{lake.dailyIngestion}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Tables:</span>
-                          <span className="ml-2 font-medium">{lake.tables}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </div>
+    <ComponentLayout
+      title="Data Lakes"
+      description="Enterprise data lake integration and management"
+      dashboardContent={dashboardContent}
+      onRefresh={handleRefresh}
+      activityData={mockDataLakeActivityData}
+      tasksData={mockDataLakeTasksData}
+      configurationData={mockDataLakeConfigData}
+    >
+      {dashboardContent}
+    </ComponentLayout>
   )
 }

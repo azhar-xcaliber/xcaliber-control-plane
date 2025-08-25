@@ -1,182 +1,192 @@
 "use client"
+import { ComponentLayout } from "@/components/component-layout"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Building2, Users, Send as Sync, CheckCircle } from "lucide-react"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Building2, Plus, Settings, CheckCircle, AlertTriangle, Users, TrendingUp } from "lucide-react"
-
-const mockCrmSystems = [
+const mockCrmActivityData = [
   {
-    id: "crm-001",
-    name: "Salesforce Health Cloud",
-    type: "Salesforce",
-    status: "connected",
-    lastSync: "2 minutes ago",
-    records: "45,230",
-    syncFrequency: "Real-time",
-    description: "Patient relationship management and care coordination",
+    id: "act_crm_001",
+    timestamp: new Date(Date.now() - 1000 * 60 * 15),
+    type: "success" as const,
+    action: "Contact Sync Completed",
+    description: "Successfully synchronized 1,247 patient contacts with Salesforce",
+    user: "system",
+    metadata: { crmSystem: "salesforce", contactsSynced: 1247, duration: "3m 45s" },
   },
   {
-    id: "crm-002",
-    name: "Microsoft Dynamics 365",
-    type: "Dynamics 365",
-    status: "connected",
-    lastSync: "5 minutes ago",
-    records: "23,890",
-    syncFrequency: "Every 5 minutes",
-    description: "Provider relationship and referral management",
+    id: "act_crm_002",
+    timestamp: new Date(Date.now() - 1000 * 60 * 35),
+    type: "warning" as const,
+    action: "API Rate Limit Approached",
+    description: "HubSpot API usage approaching daily rate limit",
+    user: "system",
+    metadata: { crmSystem: "hubspot", currentUsage: "9500", dailyLimit: "10000" },
   },
   {
-    id: "crm-003",
-    name: "HubSpot Healthcare",
-    type: "HubSpot",
-    status: "warning",
-    lastSync: "1 hour ago",
-    records: "12,450",
-    syncFrequency: "Hourly",
-    description: "Marketing automation and patient engagement",
+    id: "act_crm_003",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60),
+    type: "info" as const,
+    action: "Field Mapping Updated",
+    description: "Updated field mappings for patient demographics in CRM integration",
+    user: "crm.admin@hospital.com",
+    metadata: { crmSystem: "salesforce", fieldsUpdated: 5, mappingVersion: "v2.3" },
+  },
+]
+
+const mockCrmTasksData = [
+  {
+    id: "task_crm_001",
+    title: "Configure HubSpot Integration",
+    description: "Set up new HubSpot integration for patient engagement tracking",
+    status: "pending" as const,
+    priority: "high" as const,
+    assignee: "crm.team@hospital.com",
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12),
+    tags: ["hubspot", "integration", "patient-engagement"],
+  },
+  {
+    id: "task_crm_002",
+    title: "Optimize Sync Performance",
+    description: "Improve sync performance for large contact datasets",
+    status: "in-progress" as const,
+    priority: "medium" as const,
+    assignee: "integration.team@hospital.com",
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+    tags: ["performance", "sync", "optimization"],
+  },
+]
+
+const mockCrmConfigData = [
+  {
+    id: "config_crm_001",
+    name: "Sync Interval",
+    type: "string",
+    value: "15 minutes",
+    description: "Frequency of contact synchronization with CRM systems",
+    category: "Synchronization",
+    isEditable: true,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+    modifiedBy: "crm.admin@hospital.com",
+    defaultValue: "30 minutes",
+  },
+  {
+    id: "config_crm_002",
+    name: "Enable Bidirectional Sync",
+    type: "boolean",
+    value: false,
+    description: "Allow data to sync both ways between hospital system and CRM",
+    category: "Synchronization",
+    isEditable: true,
+    isRequired: false,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+    modifiedBy: "crm.admin@hospital.com",
+    defaultValue: false,
+  },
+  {
+    id: "config_crm_003",
+    name: "Data Privacy Mode",
+    type: "boolean",
+    value: true,
+    description: "Enable enhanced data privacy features for CRM integrations",
+    category: "Privacy",
+    isEditable: false,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
+    modifiedBy: "privacy@hospital.com",
+    defaultValue: true,
   },
 ]
 
 export function CrmSystemsView() {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "connected":
-        return "bg-green-100 text-green-700"
-      case "warning":
-        return "bg-yellow-100 text-yellow-700"
-      case "error":
-        return "bg-red-100 text-red-700"
-      default:
-        return "bg-gray-100 text-gray-700"
-    }
+  const handleRefresh = () => {
+    console.log("Refreshing CRM systems...")
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "connected":
-        return <CheckCircle className="w-4 h-4" />
-      case "warning":
-        return <AlertTriangle className="w-4 h-4" />
-      case "error":
-        return <AlertTriangle className="w-4 h-4" />
-      default:
-        return <Building2 className="w-4 h-4" />
-    }
-  }
+  const dashboardContent = (
+    <div className="p-6 space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Connected CRMs</p>
+                <p className="text-2xl font-bold text-gray-900">3</p>
+              </div>
+              <Building2 className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Synchronized Contacts</p>
+                <p className="text-2xl font-bold text-green-600">12.4K</p>
+              </div>
+              <Users className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Last Sync</p>
+                <p className="text-2xl font-bold text-blue-600">2h ago</p>
+              </div>
+              <Sync className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Sync Status</p>
+                <p className="text-2xl font-bold text-green-600">100%</p>
+              </div>
+              <CheckCircle className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* CRM Systems */}
+      <Card>
+        <CardHeader>
+          <CardTitle>CRM System Integration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <div className="text-gray-500 mb-4">Customer relationship management integration</div>
+            <div className="text-sm text-gray-400">
+              Integrate with Salesforce, HubSpot, and other enterprise CRM systems for patient relationship management.
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">CRM Systems</h2>
-            <p className="text-sm text-gray-500">Integrate with customer relationship management platforms</p>
-          </div>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add CRM Integration
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Connected CRMs</p>
-                  <p className="text-2xl font-bold text-gray-900">{mockCrmSystems.length}</p>
-                </div>
-                <Building2 className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Records</p>
-                  <p className="text-2xl font-bold text-green-600">81.6K</p>
-                </div>
-                <Users className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Sync Status</p>
-                  <p className="text-2xl font-bold text-green-600">98.5%</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Active Syncs</p>
-                  <p className="text-2xl font-bold text-blue-600">2</p>
-                </div>
-                <CheckCircle className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* CRM Systems List */}
-        <div className="space-y-4">
-          {mockCrmSystems.map((crm) => (
-            <Card key={crm.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Building2 className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900">{crm.name}</h3>
-                        <Badge variant="outline" className="text-xs">
-                          {crm.type}
-                        </Badge>
-                        <Badge className={getStatusColor(crm.status)}>
-                          {getStatusIcon(crm.status)}
-                          <span className="ml-1">{crm.status}</span>
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">{crm.description}</p>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">Records:</span>
-                          <span className="ml-2 font-medium">{crm.records}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Last Sync:</span>
-                          <span className="ml-2 font-medium">{crm.lastSync}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Frequency:</span>
-                          <span className="ml-2 font-medium">{crm.syncFrequency}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </div>
+    <ComponentLayout
+      title="CRM Systems"
+      description="Customer relationship management system integration"
+      dashboardContent={dashboardContent}
+      onRefresh={handleRefresh}
+      activityData={mockCrmActivityData}
+      tasksData={mockCrmTasksData}
+      configurationData={mockCrmConfigData}
+    >
+      {dashboardContent}
+    </ComponentLayout>
   )
 }

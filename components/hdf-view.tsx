@@ -1,211 +1,192 @@
 "use client"
+import { ComponentLayout } from "@/components/component-layout"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { FileText, Activity, Database, CheckCircle } from "lucide-react"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import {
-  FileText,
-  Plus,
-  Settings,
-  CheckCircle,
-  AlertTriangle,
-  Activity,
-  Database,
-  BarChart3,
-  Shield,
-} from "lucide-react"
+const mockHdfActivityData = [
+  {
+    id: "act_hdf_001",
+    timestamp: new Date(Date.now() - 1000 * 60 * 20),
+    type: "success" as const,
+    action: "Data Quality Check Completed",
+    description: "Completed quality validation on patient demographics dataset",
+    user: "system",
+    metadata: { dataset: "patient_demographics", recordsValidated: 15420, issuesFound: 0 },
+  },
+  {
+    id: "act_hdf_002",
+    timestamp: new Date(Date.now() - 1000 * 60 * 35),
+    type: "warning" as const,
+    action: "Schema Drift Detected",
+    description: "Detected schema changes in lab results data feed",
+    user: "system",
+    metadata: { dataset: "lab_results", fieldsChanged: 2, compatibility: "backward" },
+  },
+  {
+    id: "act_hdf_003",
+    timestamp: new Date(Date.now() - 1000 * 60 * 50),
+    type: "info" as const,
+    action: "Dataset Published",
+    description: "Published curated medication dataset to data catalog",
+    user: "data.curator@hospital.com",
+    metadata: { dataset: "medications_curated", version: "v2.3", records: 8934 },
+  },
+]
 
-const mockHdfComponents = [
+const mockHdfTasksData = [
   {
-    id: "hdf-001",
-    name: "Clinical Data Warehouse",
-    type: "Data Repository",
-    status: "operational",
-    dataVolume: "2.4TB",
-    lastUpdate: "5 minutes ago",
-    description: "Centralized repository for clinical and patient data",
+    id: "task_hdf_001",
+    title: "Implement New Data Quality Rules",
+    description: "Add validation rules for new patient consent data fields",
+    status: "pending" as const,
+    priority: "high" as const,
+    assignee: "data.quality@hospital.com",
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+    tags: ["data-quality", "validation", "consent"],
   },
   {
-    id: "hdf-002",
-    name: "FHIR Data Processor",
-    type: "Data Processor",
-    status: "operational",
-    dataVolume: "890GB",
-    lastUpdate: "2 minutes ago",
-    description: "FHIR standard data processing and transformation engine",
+    id: "task_hdf_002",
+    title: "Optimize ETL Performance",
+    description: "Improve performance of nightly ETL processes for claims data",
+    status: "in-progress" as const,
+    priority: "medium" as const,
+    assignee: "etl.team@hospital.com",
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+    tags: ["performance", "etl", "claims"],
+  },
+]
+
+const mockHdfConfigData = [
+  {
+    id: "config_hdf_001",
+    name: "Data Quality Threshold",
+    type: "number",
+    value: 95,
+    description: "Minimum data quality score required for dataset publication",
+    category: "Quality",
+    isEditable: true,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
+    modifiedBy: "data.quality@hospital.com",
+    defaultValue: 90,
   },
   {
-    id: "hdf-003",
-    name: "Analytics Engine",
-    type: "Analytics",
-    status: "processing",
-    dataVolume: "1.2TB",
-    lastUpdate: "1 minute ago",
-    description: "Healthcare analytics and reporting engine",
+    id: "config_hdf_002",
+    name: "Enable Data Lineage Tracking",
+    type: "boolean",
+    value: true,
+    description: "Track data lineage for all processed datasets",
+    category: "Governance",
+    isEditable: false,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
+    modifiedBy: "governance@hospital.com",
+    defaultValue: true,
   },
   {
-    id: "hdf-004",
-    name: "Compliance Monitor",
-    type: "Compliance",
-    status: "monitoring",
-    dataVolume: "156GB",
-    lastUpdate: "3 minutes ago",
-    description: "HIPAA and healthcare compliance monitoring system",
+    id: "config_hdf_003",
+    name: "Batch Processing Window",
+    type: "string",
+    value: "02:00-06:00",
+    description: "Time window for batch processing operations",
+    category: "Processing",
+    isEditable: true,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+    modifiedBy: "operations@hospital.com",
+    defaultValue: "01:00-05:00",
   },
 ]
 
 export function HdfView() {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "operational":
-        return "bg-green-100 text-green-700"
-      case "processing":
-        return "bg-blue-100 text-blue-700"
-      case "monitoring":
-        return "bg-purple-100 text-purple-700"
-      case "warning":
-        return "bg-yellow-100 text-yellow-700"
-      default:
-        return "bg-gray-100 text-gray-700"
-    }
+  const handleRefresh = () => {
+    console.log("Refreshing Healthcare Data Factory...")
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "operational":
-        return <CheckCircle className="w-4 h-4" />
-      case "processing":
-        return <Activity className="w-4 h-4" />
-      case "monitoring":
-        return <Shield className="w-4 h-4" />
-      case "warning":
-        return <AlertTriangle className="w-4 h-4" />
-      default:
-        return <Activity className="w-4 h-4" />
-    }
-  }
+  const dashboardContent = (
+    <div className="p-6 space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Datasets</p>
+                <p className="text-2xl font-bold text-gray-900">24</p>
+              </div>
+              <Database className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
 
-  const getComponentIcon = (type: string) => {
-    switch (type) {
-      case "Data Repository":
-        return <Database className="w-5 h-5 text-blue-600" />
-      case "Data Processor":
-        return <Activity className="w-5 h-5 text-green-600" />
-      case "Analytics":
-        return <BarChart3 className="w-5 h-5 text-purple-600" />
-      case "Compliance":
-        return <Shield className="w-5 h-5 text-orange-600" />
-      default:
-        return <FileText className="w-5 h-5 text-gray-600" />
-    }
-  }
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Active Processes</p>
+                <p className="text-2xl font-bold text-blue-600">12</p>
+              </div>
+              <Activity className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Quality Score</p>
+                <p className="text-2xl font-bold text-green-600">94.2%</p>
+              </div>
+              <CheckCircle className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Records/Day</p>
+                <p className="text-2xl font-bold text-purple-600">1.2M</p>
+              </div>
+              <FileText className="w-8 h-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* HDF Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Healthcare Data Factory Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <div className="text-gray-500 mb-4">Healthcare Data Factory Management</div>
+            <div className="text-sm text-gray-400">
+              Centralized healthcare data processing, validation, and transformation hub.
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Healthcare Data Factory (HDF)</h2>
-            <p className="text-sm text-gray-500">Healthcare-specific data processing and analytics platform</p>
-          </div>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Component
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">HDF Components</p>
-                  <p className="text-2xl font-bold text-gray-900">{mockHdfComponents.length}</p>
-                </div>
-                <FileText className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Data Volume</p>
-                  <p className="text-2xl font-bold text-green-600">4.6TB</p>
-                </div>
-                <Database className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Processing Jobs</p>
-                  <p className="text-2xl font-bold text-blue-600">23</p>
-                </div>
-                <Activity className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Compliance Score</p>
-                  <p className="text-2xl font-bold text-green-600">98.5%</p>
-                </div>
-                <Shield className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* HDF Components List */}
-        <div className="space-y-4">
-          {mockHdfComponents.map((component) => (
-            <Card key={component.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="p-2 bg-gray-100 rounded-lg">{getComponentIcon(component.type)}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900">{component.name}</h3>
-                        <Badge variant="outline" className="text-xs">
-                          {component.type}
-                        </Badge>
-                        <Badge className={getStatusColor(component.status)}>
-                          {getStatusIcon(component.status)}
-                          <span className="ml-1">{component.status}</span>
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">{component.description}</p>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">Data Volume:</span>
-                          <span className="ml-2 font-medium">{component.dataVolume}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Last Update:</span>
-                          <span className="ml-2 font-medium">{component.lastUpdate}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </div>
+    <ComponentLayout
+      title="Healthcare Data Factory (HDF)"
+      description="Centralized healthcare data processing and validation hub"
+      dashboardContent={dashboardContent}
+      onRefresh={handleRefresh}
+      activityData={mockHdfActivityData}
+      tasksData={mockHdfTasksData}
+      configurationData={mockHdfConfigData}
+    >
+      {dashboardContent}
+    </ComponentLayout>
   )
 }

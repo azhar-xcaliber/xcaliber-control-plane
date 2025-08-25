@@ -1,180 +1,192 @@
 "use client"
+import { ComponentLayout } from "@/components/component-layout"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Activity, MessageSquare, TrendingUp, AlertTriangle } from "lucide-react"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Activity, Plus, Settings, CheckCircle, AlertTriangle, TrendingUp, Database } from "lucide-react"
-
-const mockKafkaQueues = [
+const mockKafkaActivityData = [
   {
-    id: "kafka-001",
-    name: "patient-data-stream",
-    topic: "healthcare.patients.updates",
-    status: "active",
-    messagesPerSec: "1,247",
-    consumers: 3,
-    partitions: 6,
-    description: "Real-time patient data updates and changes",
+    id: "act_kafka_001",
+    timestamp: new Date(Date.now() - 1000 * 60 * 8),
+    type: "warning" as const,
+    action: "Consumer Lag Detected",
+    description: "High consumer lag detected on patient-events topic",
+    user: "system",
+    metadata: { topic: "patient-events", lag: "15000 messages", consumer: "analytics-service" },
   },
   {
-    id: "kafka-002",
-    name: "clinical-events",
-    topic: "healthcare.clinical.events",
-    status: "active",
-    messagesPerSec: "892",
-    consumers: 2,
-    partitions: 4,
-    description: "Clinical events and procedure notifications",
+    id: "act_kafka_002",
+    timestamp: new Date(Date.now() - 1000 * 60 * 22),
+    type: "success" as const,
+    action: "Topic Created",
+    description: "New Kafka topic created for radiology image metadata",
+    user: "kafka.admin@hospital.com",
+    metadata: { topic: "radiology-metadata", partitions: 6, replication: 3 },
   },
   {
-    id: "kafka-003",
-    name: "lab-results-queue",
-    topic: "healthcare.lab.results",
-    status: "warning",
-    messagesPerSec: "456",
-    consumers: 1,
-    partitions: 3,
-    description: "Laboratory test results and diagnostic data",
+    id: "act_kafka_003",
+    timestamp: new Date(Date.now() - 1000 * 60 * 45),
+    type: "info" as const,
+    action: "Partition Rebalance",
+    description: "Consumer group rebalanced for lab-results topic",
+    user: "system",
+    metadata: { topic: "lab-results", consumerGroup: "processing-group", duration: "2.3s" },
+  },
+]
+
+const mockKafkaTasksData = [
+  {
+    id: "task_kafka_001",
+    title: "Optimize Consumer Performance",
+    description: "Investigate and resolve consumer lag issues on high-volume topics",
+    status: "in-progress" as const,
+    priority: "high" as const,
+    assignee: "kafka.team@hospital.com",
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8),
+    tags: ["performance", "consumer-lag", "optimization"],
+  },
+  {
+    id: "task_kafka_002",
+    title: "Set Up Topic Monitoring",
+    description: "Configure monitoring and alerting for critical Kafka topics",
+    status: "pending" as const,
+    priority: "medium" as const,
+    assignee: "monitoring.team@hospital.com",
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+    tags: ["monitoring", "alerting", "topics"],
+  },
+]
+
+const mockKafkaConfigData = [
+  {
+    id: "config_kafka_001",
+    name: "Default Retention Period",
+    type: "string",
+    value: "7 days",
+    description: "Default message retention period for new topics",
+    category: "Storage",
+    isEditable: true,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
+    modifiedBy: "kafka.admin@hospital.com",
+    defaultValue: "3 days",
+  },
+  {
+    id: "config_kafka_002",
+    name: "Enable SSL",
+    type: "boolean",
+    value: true,
+    description: "Enable SSL encryption for all Kafka communications",
+    category: "Security",
+    isEditable: false,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
+    modifiedBy: "security@hospital.com",
+    defaultValue: true,
+  },
+  {
+    id: "config_kafka_003",
+    name: "Max Message Size",
+    type: "string",
+    value: "10MB",
+    description: "Maximum message size allowed in Kafka topics",
+    category: "Performance",
+    isEditable: true,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14),
+    modifiedBy: "kafka.admin@hospital.com",
+    defaultValue: "1MB",
   },
 ]
 
 export function KafkaQueuesView() {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-700"
-      case "warning":
-        return "bg-yellow-100 text-yellow-700"
-      case "error":
-        return "bg-red-100 text-red-700"
-      default:
-        return "bg-gray-100 text-gray-700"
-    }
+  const handleRefresh = () => {
+    console.log("Refreshing Kafka queues...")
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "active":
-        return <CheckCircle className="w-4 h-4" />
-      case "warning":
-        return <AlertTriangle className="w-4 h-4" />
-      case "error":
-        return <AlertTriangle className="w-4 h-4" />
-      default:
-        return <Activity className="w-4 h-4" />
-    }
-  }
+  const dashboardContent = (
+    <div className="p-6 space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Active Topics</p>
+                <p className="text-2xl font-bold text-gray-900">12</p>
+              </div>
+              <Activity className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Messages/sec</p>
+                <p className="text-2xl font-bold text-green-600">1.2K</p>
+              </div>
+              <MessageSquare className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Throughput</p>
+                <p className="text-2xl font-bold text-blue-600">45MB/s</p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Lag</p>
+                <p className="text-2xl font-bold text-yellow-600">234ms</p>
+              </div>
+              <AlertTriangle className="w-8 h-8 text-yellow-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Kafka Topics */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Enterprise Kafka Integration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Activity className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <div className="text-gray-500 mb-4">Kafka message queue integration</div>
+            <div className="text-sm text-gray-400">
+              Configure and monitor Kafka topics for enterprise data streaming and messaging.
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Kafka Queues</h2>
-            <p className="text-sm text-gray-500">Manage real-time data streaming and message queues</p>
-          </div>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Queue
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Active Queues</p>
-                  <p className="text-2xl font-bold text-gray-900">{mockKafkaQueues.length}</p>
-                </div>
-                <Activity className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Messages/Sec</p>
-                  <p className="text-2xl font-bold text-green-600">2.6K</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Consumers</p>
-                  <p className="text-2xl font-bold text-blue-600">6</p>
-                </div>
-                <Database className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Partitions</p>
-                  <p className="text-2xl font-bold text-gray-900">13</p>
-                </div>
-                <Activity className="w-8 h-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Kafka Queues List */}
-        <div className="space-y-4">
-          {mockKafkaQueues.map((queue) => (
-            <Card key={queue.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="p-2 bg-orange-100 rounded-lg">
-                      <Activity className="w-5 h-5 text-orange-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900">{queue.name}</h3>
-                        <Badge className={getStatusColor(queue.status)}>
-                          {getStatusIcon(queue.status)}
-                          <span className="ml-1">{queue.status}</span>
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">{queue.description}</p>
-                      <div className="text-xs text-gray-500 mb-3">Topic: {queue.topic}</div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">Messages/Sec:</span>
-                          <span className="ml-2 font-medium">{queue.messagesPerSec}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Consumers:</span>
-                          <span className="ml-2 font-medium">{queue.consumers}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Partitions:</span>
-                          <span className="ml-2 font-medium">{queue.partitions}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </div>
+    <ComponentLayout
+      title="Kafka Queues"
+      description="Enterprise message queue integration and monitoring"
+      dashboardContent={dashboardContent}
+      onRefresh={handleRefresh}
+      activityData={mockKafkaActivityData}
+      tasksData={mockKafkaTasksData}
+      configurationData={mockKafkaConfigData}
+    >
+      {dashboardContent}
+    </ComponentLayout>
   )
 }

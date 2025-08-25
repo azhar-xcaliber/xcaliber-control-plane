@@ -94,9 +94,9 @@ const getServiceDisplayName = (service: string) => {
   const serviceNames: Record<string, string> = {
     overview: "Platform Overview",
     "data-sources": "Data Sources",
-    channels: "Channels",
+    channels: "Data Channels",
     hdf: "Healthcare Data Factory",
-    "data-fabric": "Data Fabric",
+    "data-fabric": "Healthcare Data Fabric",
     "data-access": "Data Access",
     agents: "Agents Studio",
     workflows: "Workflows Studio",

@@ -76,7 +76,7 @@ const pods = [
   },
 ]
 
-// Tenants for selector
+// Tenants for top-level selector
 const tenants = [
   { id: "tenant-1", name: "Acme Corp", plan: "Enterprise" },
   { id: "tenant-2", name: "TechStart Inc", plan: "Professional" },
@@ -188,7 +188,7 @@ export function Sidebar({
             </Button>
           </div>
 
-          {/* Tenant Selector */}
+          {/* Tenant Selector - Now top-level */}
           {!isCollapsed && (
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Active Tenant</label>

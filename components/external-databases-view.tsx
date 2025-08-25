@@ -1,192 +1,192 @@
 "use client"
+import { ComponentLayout } from "@/components/component-layout"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Database, Zap, Activity, CheckCircle } from "lucide-react"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Database, Plus, Settings, CheckCircle, AlertTriangle, HardDrive, Activity } from "lucide-react"
+const mockExternalDbActivityData = [
+  {
+    id: "act_edb_001",
+    timestamp: new Date(Date.now() - 1000 * 60 * 7),
+    type: "success" as const,
+    action: "Database Connection Established",
+    description: "Successfully connected to external PostgreSQL database",
+    user: "system",
+    metadata: { database: "external-postgres-01", connectionTime: "156ms", status: "healthy" },
+  },
+  {
+    id: "act_edb_002",
+    timestamp: new Date(Date.now() - 1000 * 60 * 25),
+    type: "error" as const,
+    action: "Connection Timeout",
+    description: "Failed to connect to Oracle database - connection timeout",
+    user: "system",
+    metadata: { database: "oracle-legacy", error: "Connection timeout after 30s", retryCount: 3 },
+  },
+  {
+    id: "act_edb_003",
+    timestamp: new Date(Date.now() - 1000 * 60 * 42),
+    type: "info" as const,
+    action: "Query Performance Optimized",
+    description: "Applied query optimization for MySQL database connections",
+    user: "db.admin@hospital.com",
+    metadata: { database: "mysql-analytics", queriesOptimized: 12, performanceGain: "28%" },
+  },
+]
 
-const mockDatabases = [
+const mockExternalDbTasksData = [
   {
-    id: "db-001",
-    name: "Oracle Clinical Database",
-    type: "Oracle",
-    status: "connected",
-    lastSync: "1 minute ago",
-    tables: 45,
-    dataSize: "890GB",
-    description: "Primary clinical data repository",
+    id: "task_edb_001",
+    title: "Fix Oracle Connection Issues",
+    description: "Investigate and resolve connection timeout issues with Oracle legacy database",
+    status: "in-progress" as const,
+    priority: "critical" as const,
+    assignee: "db.admin@hospital.com",
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 4),
+    tags: ["oracle", "connection", "troubleshooting"],
   },
   {
-    id: "db-002",
-    name: "PostgreSQL Analytics DB",
-    type: "PostgreSQL",
-    status: "connected",
-    lastSync: "3 minutes ago",
-    tables: 23,
-    dataSize: "234GB",
-    description: "Analytics and reporting database",
+    id: "task_edb_002",
+    title: "Set Up MongoDB Integration",
+    description: "Configure new MongoDB connection for document storage requirements",
+    status: "pending" as const,
+    priority: "medium" as const,
+    assignee: "integration.team@hospital.com",
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+    tags: ["mongodb", "integration", "documents"],
+  },
+]
+
+const mockExternalDbConfigData = [
+  {
+    id: "config_edb_001",
+    name: "Connection Pool Size",
+    type: "number",
+    value: 50,
+    description: "Maximum number of concurrent connections per external database",
+    category: "Performance",
+    isEditable: true,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
+    modifiedBy: "db.admin@hospital.com",
+    defaultValue: 25,
   },
   {
-    id: "db-003",
-    name: "MongoDB Document Store",
-    type: "MongoDB",
-    status: "syncing",
-    lastSync: "5 minutes ago",
-    tables: 12,
-    dataSize: "156GB",
-    description: "Unstructured clinical documents and notes",
+    id: "config_edb_002",
+    name: "Enable SSL Connections",
+    type: "boolean",
+    value: true,
+    description: "Require SSL encryption for all external database connections",
+    category: "Security",
+    isEditable: false,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
+    modifiedBy: "security@hospital.com",
+    defaultValue: true,
   },
   {
-    id: "db-004",
-    name: "MySQL Legacy System",
-    type: "MySQL",
-    status: "error",
-    lastSync: "2 hours ago",
-    tables: 67,
-    dataSize: "445GB",
-    description: "Legacy patient management system",
+    id: "config_edb_003",
+    name: "Query Timeout",
+    type: "number",
+    value: 30,
+    description: "Query timeout in seconds for external database operations",
+    category: "Performance",
+    isEditable: true,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
+    modifiedBy: "db.admin@hospital.com",
+    defaultValue: 15,
   },
 ]
 
 export function ExternalDatabasesView() {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "connected":
-        return "bg-green-100 text-green-700"
-      case "syncing":
-        return "bg-blue-100 text-blue-700"
-      case "error":
-        return "bg-red-100 text-red-700"
-      default:
-        return "bg-gray-100 text-gray-700"
-    }
+  const handleRefresh = () => {
+    console.log("Refreshing external databases...")
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "connected":
-        return <CheckCircle className="w-4 h-4" />
-      case "syncing":
-        return <Activity className="w-4 h-4" />
-      case "error":
-        return <AlertTriangle className="w-4 h-4" />
-      default:
-        return <Database className="w-4 h-4" />
-    }
-  }
+  const dashboardContent = (
+    <div className="p-6 space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Connected DBs</p>
+                <p className="text-2xl font-bold text-gray-900">7</p>
+              </div>
+              <Database className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Active Connections</p>
+                <p className="text-2xl font-bold text-green-600">6</p>
+              </div>
+              <CheckCircle className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Queries/Hour</p>
+                <p className="text-2xl font-bold text-blue-600">3.2K</p>
+              </div>
+              <Activity className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Avg Response</p>
+                <p className="text-2xl font-bold text-purple-600">45ms</p>
+              </div>
+              <Zap className="w-8 h-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* External Databases */}
+      <Card>
+        <CardHeader>
+          <CardTitle>External Database Integration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Database className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <div className="text-gray-500 mb-4">External database connections</div>
+            <div className="text-sm text-gray-400">
+              Connect to PostgreSQL, MySQL, Oracle, and other external databases for comprehensive data access.
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">External Databases</h2>
-            <p className="text-sm text-gray-500">Connect to external database systems and applications</p>
-          </div>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Database
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Connected DBs</p>
-                  <p className="text-2xl font-bold text-gray-900">{mockDatabases.length}</p>
-                </div>
-                <Database className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Data Size</p>
-                  <p className="text-2xl font-bold text-green-600">1.7TB</p>
-                </div>
-                <HardDrive className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Tables</p>
-                  <p className="text-2xl font-bold text-blue-600">147</p>
-                </div>
-                <Database className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Health Score</p>
-                  <p className="text-2xl font-bold text-green-600">92%</p>
-                </div>
-                <CheckCircle className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Databases List */}
-        <div className="space-y-4">
-          {mockDatabases.map((db) => (
-            <Card key={db.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="p-2 bg-gray-100 rounded-lg">
-                      <Database className="w-5 h-5 text-gray-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900">{db.name}</h3>
-                        <Badge variant="outline" className="text-xs">
-                          {db.type}
-                        </Badge>
-                        <Badge className={getStatusColor(db.status)}>
-                          {getStatusIcon(db.status)}
-                          <span className="ml-1">{db.status}</span>
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">{db.description}</p>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">Tables:</span>
-                          <span className="ml-2 font-medium">{db.tables}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Data Size:</span>
-                          <span className="ml-2 font-medium">{db.dataSize}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Last Sync:</span>
-                          <span className="ml-2 font-medium">{db.lastSync}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </div>
+    <ComponentLayout
+      title="External Databases"
+      description="External database integration and connection management"
+      dashboardContent={dashboardContent}
+      onRefresh={handleRefresh}
+      activityData={mockExternalDbActivityData}
+      tasksData={mockExternalDbTasksData}
+      configurationData={mockExternalDbConfigData}
+    >
+      {dashboardContent}
+    </ComponentLayout>
   )
 }

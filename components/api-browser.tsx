@@ -6,270 +6,308 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Play, Save, Copy, Globe, Clock, CheckCircle, AlertCircle, Plus, Folder, FileText } from 'lucide-react'
+import { Search, Code, Globe, Database, Play, Copy, BookOpen } from "lucide-react"
 
-const mockCollections = [
+const mockEndpoints = [
   {
-    id: "auth",
-    name: "Authentication",
-    requests: [
-      { id: "login", name: "User Login", method: "POST", url: "/api/v1/auth/login" },
-      { id: "refresh", name: "Refresh Token", method: "POST", url: "/api/v1/auth/refresh" },
-    ]
+    id: "ep_001",
+    method: "GET",
+    path: "/api/v1/patients",
+    description: "Retrieve patient list with optional filtering",
+    version: "v1",
+    status: "active",
+    responseTime: "45ms",
+    tags: ["patients", "fhir"],
   },
   {
-    id: "workflows",
-    name: "Workflows",
-    requests: [
-      { id: "list-workflows", name: "List Workflows", method: "GET", url: "/api/v1/workflows" },
-      { id: "create-workflow", name: "Create Workflow", method: "POST", url: "/api/v1/workflows" },
-      { id: "execute-workflow", name: "Execute Workflow", method: "POST", url: "/api/v1/workflows/{id}/execute" },
-    ]
+    id: "ep_002",
+    method: "POST",
+    path: "/api/v1/patients",
+    description: "Create a new patient record",
+    version: "v1",
+    status: "active",
+    responseTime: "120ms",
+    tags: ["patients", "fhir", "create"],
   },
   {
-    id: "data",
-    name: "Data Models",
-    requests: [
-      { id: "list-models", name: "List Data Models", method: "GET", url: "/api/v1/data/models" },
-      { id: "query-data", name: "Query Data", method: "POST", url: "/api/v1/data/query" },
-    ]
-  }
+    id: "ep_003",
+    method: "GET",
+    path: "/api/v1/observations",
+    description: "Retrieve clinical observations and lab results",
+    version: "v1",
+    status: "active",
+    responseTime: "67ms",
+    tags: ["observations", "lab", "fhir"],
+  },
+  {
+    id: "ep_004",
+    method: "PUT",
+    path: "/api/v1/appointments/{id}",
+    description: "Update appointment information",
+    version: "v1",
+    status: "deprecated",
+    responseTime: "89ms",
+    tags: ["appointments", "schedule"],
+  },
 ]
 
-const mockResponse = {
-  status: 200,
-  statusText: "OK",
-  headers: {
-    "Content-Type": "application/json",
-    "X-Response-Time": "89ms",
-    "X-Request-ID": "req_123456789"
-  },
-  data: {
-    success: true,
-    data: {
-      workflows: [
-        {
-          id: "wf_001",
-          name: "Customer Data Processing",
-          status: "active",
-          created_at: "2024-01-15T10:30:00Z"
-        },
-        {
-          id: "wf_002", 
-          name: "Real-time Analytics",
-          status: "running",
-          created_at: "2024-01-15T09:15:00Z"
-        }
-      ]
-    },
-    meta: {
-      total: 2,
-      page: 1,
-      per_page: 10
+export function ApiBrowser() {
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedMethod, setSelectedMethod] = useState("all")
+  const [selectedEndpoint, setSelectedEndpoint] = useState(mockEndpoints[0])
+
+  const filteredEndpoints = mockEndpoints.filter((endpoint) => {
+    const matchesSearch =
+      endpoint.path.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      endpoint.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      endpoint.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    const matchesMethod = selectedMethod === "all" || endpoint.method === selectedMethod
+
+    return matchesSearch && matchesMethod
+  })
+
+  const getMethodColor = (method: string) => {
+    switch (method) {
+      case "GET":
+        return "bg-green-100 text-green-700"
+      case "POST":
+        return "bg-blue-100 text-blue-700"
+      case "PUT":
+        return "bg-orange-100 text-orange-700"
+      case "DELETE":
+        return "bg-red-100 text-red-700"
+      default:
+        return "bg-gray-100 text-gray-700"
     }
   }
-}
 
-export function ApiBrowser() {
-  const [selectedMethod, setSelectedMethod] = useState("GET")
-  const [url, setUrl] = useState("/api/v1/workflows")
-  const [requestBody, setRequestBody] = useState("")
-  const [response, setResponse] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [selectedCollection, setSelectedCollection] = useState<string | null>(null)
-  const [selectedRequest, setSelectedRequest] = useState<string | null>(null)
-
-  const methods = ["GET", "POST", "PUT", "DELETE", "PATCH"]
-
-  const handleSendRequest = async () => {
-    setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      setResponse(mockResponse)
-      setIsLoading(false)
-    }, 1000)
-  }
-
-  const handleSelectRequest = (collectionId: string, requestId: string) => {
-    const collection = mockCollections.find(c => c.id === collectionId)
-    const request = collection?.requests.find(r => r.id === requestId)
-    if (request) {
-      setSelectedMethod(request.method)
-      setUrl(request.url)
-      setSelectedCollection(collectionId)
-      setSelectedRequest(requestId)
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-green-100 text-green-700"
+      case "deprecated":
+        return "bg-yellow-100 text-yellow-700"
+      case "beta":
+        return "bg-blue-100 text-blue-700"
+      default:
+        return "bg-gray-100 text-gray-700"
     }
   }
 
   return (
     <div className="flex-1 flex">
-      {/* Sidebar - Collections */}
-      <div className="w-80 border-r border-gray-200 bg-white">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-gray-900">Collections</h2>
-            <Button size="sm" variant="outline">
-              <Plus className="w-4 h-4 mr-2" />
-              New
-            </Button>
+      {/* Sidebar */}
+      <div className="w-1/3 border-r border-gray-200 flex flex-col">
+        <div className="p-6 border-b border-gray-200 bg-white">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">API Browser</h2>
+            <Badge variant="outline" className="text-sm">
+              {filteredEndpoints.length} endpoints
+            </Badge>
+          </div>
+
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search endpoints..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              {["all", "GET", "POST", "PUT", "DELETE"].map((method) => (
+                <Button
+                  key={method}
+                  variant={selectedMethod === method ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedMethod(method)}
+                >
+                  {method === "all" ? "All" : method}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
-        
-        <div className="p-4 space-y-3">
-          {mockCollections.map((collection) => (
-            <div key={collection.id} className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Folder className="w-4 h-4" />
-                {collection.name}
-              </div>
-              <div className="ml-6 space-y-1">
-                {collection.requests.map((request) => (
-                  <button
-                    key={request.id}
-                    onClick={() => handleSelectRequest(collection.id, request.id)}
-                    className={`w-full text-left p-2 rounded text-sm hover:bg-gray-100 flex items-center gap-2 ${
-                      selectedCollection === collection.id && selectedRequest === request.id
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    <FileText className="w-3 h-3" />
-                    <Badge variant="outline" className="text-xs">
-                      {request.method}
-                    </Badge>
-                    <span className="truncate">{request.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 space-y-2">
+            {filteredEndpoints.map((endpoint) => (
+              <Card
+                key={endpoint.id}
+                className={`cursor-pointer transition-colors ${
+                  selectedEndpoint.id === endpoint.id ? "ring-2 ring-blue-500" : "hover:bg-gray-50"
+                }`}
+                onClick={() => setSelectedEndpoint(endpoint)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Badge className={getMethodColor(endpoint.method)}>{endpoint.method}</Badge>
+                      <Badge className={getStatusColor(endpoint.status)}>{endpoint.status}</Badge>
+                    </div>
+                    <span className="text-xs text-gray-500">{endpoint.responseTime}</span>
+                  </div>
+
+                  <div className="font-mono text-sm font-medium text-gray-900 mb-2">{endpoint.path}</div>
+
+                  <p className="text-xs text-gray-600 mb-2">{endpoint.description}</p>
+
+                  <div className="flex flex-wrap gap-1">
+                    {endpoint.tags.map((tag) => (
+                      <Badge key={tag} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <div className="p-6 space-y-6">
-          {/* Request Builder */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="w-5 h-5" />
-                API Request Builder
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* URL Bar */}
-              <div className="flex gap-2">
-                <select
-                  value={selectedMethod}
-                  onChange={(e) => setSelectedMethod(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium"
-                >
-                  {methods.map((method) => (
-                    <option key={method} value={method}>
-                      {method}
-                    </option>
-                  ))}
-                </select>
-                <Input
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="Enter API endpoint URL"
-                  className="flex-1"
-                />
-                <Button onClick={handleSendRequest} disabled={isLoading}>
-                  {isLoading ? (
-                    <Clock className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Play className="w-4 h-4 mr-2" />
-                  )}
-                  Send
-                </Button>
-              </div>
+        <div className="p-6 border-b border-gray-200 bg-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Badge className={getMethodColor(selectedEndpoint.method)}>{selectedEndpoint.method}</Badge>
+              <span className="font-mono text-lg font-medium">{selectedEndpoint.path}</span>
+              <Badge className={getStatusColor(selectedEndpoint.status)}>{selectedEndpoint.status}</Badge>
+            </div>
 
-              {/* Request Details */}
-              <Tabs defaultValue="body" className="w-full">
-                <TabsList>
-                  <TabsTrigger value="body">Body</TabsTrigger>
-                  <TabsTrigger value="headers">Headers</TabsTrigger>
-                  <TabsTrigger value="params">Params</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="body" className="space-y-2">
-                  <textarea
-                    value={requestBody}
-                    onChange={(e) => setRequestBody(e.target.value)}
-                    placeholder="Enter request body (JSON)"
-                    className="w-full h-32 p-3 border border-gray-300 rounded-md text-sm font-mono"
-                  />
-                </TabsContent>
-                
-                <TabsContent value="headers" className="space-y-2">
-                  <div className="text-sm text-gray-500">
-                    Headers configuration would go here
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="params" className="space-y-2">
-                  <div className="text-sm text-gray-500">
-                    Query parameters configuration would go here
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">
+                <Copy className="w-4 h-4 mr-2" />
+                Copy cURL
+              </Button>
+              <Button size="sm">
+                <Play className="w-4 h-4 mr-2" />
+                Try It
+              </Button>
+            </div>
+          </div>
 
-          {/* Response */}
-          {response && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {response.status < 400 ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 text-red-500" />
-                    )}
-                    Response
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={response.status < 400 ? "default" : "destructive"}>
-                      {response.status} {response.statusText}
-                    </Badge>
-                    <Button size="sm" variant="outline">
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy
-                    </Button>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="response" className="w-full">
-                  <TabsList>
-                    <TabsTrigger value="response">Response</TabsTrigger>
-                    <TabsTrigger value="headers">Headers</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="response">
-                    <pre className="bg-gray-50 p-4 rounded-md text-sm font-mono overflow-auto max-h-96">
-                      {JSON.stringify(response.data, null, 2)}
-                    </pre>
-                  </TabsContent>
-                  
-                  <TabsContent value="headers">
-                    <div className="space-y-2">
-                      {Object.entries(response.headers).map(([key, value]) => (
-                        <div key={key} className="flex justify-between py-2 border-b border-gray-100">
-                          <span className="font-medium text-gray-700">{key}</span>
-                          <span className="text-gray-600">{value as string}</span>
-                        </div>
-                      ))}
+          <p className="text-gray-600 mt-2">{selectedEndpoint.description}</p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <Tabs defaultValue="documentation" className="h-full">
+            <div className="border-b border-gray-200 px-6">
+              <TabsList>
+                <TabsTrigger value="documentation">Documentation</TabsTrigger>
+                <TabsTrigger value="parameters">Parameters</TabsTrigger>
+                <TabsTrigger value="response">Response</TabsTrigger>
+                <TabsTrigger value="examples">Examples</TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="documentation" className="p-6">
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BookOpen className="w-5 h-5" />
+                      Endpoint Overview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-700">Method:</span>
+                        <span className="ml-2">{selectedEndpoint.method}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Version:</span>
+                        <span className="ml-2">{selectedEndpoint.version}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Status:</span>
+                        <span className="ml-2">{selectedEndpoint.status}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Avg Response Time:</span>
+                        <span className="ml-2">{selectedEndpoint.responseTime}</span>
+                      </div>
                     </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Description</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-700">{selectedEndpoint.description}</p>
+                    <div className="mt-4">
+                      <h4 className="font-medium mb-2">Tags</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedEndpoint.tags.map((tag) => (
+                          <Badge key={tag} variant="outline">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="parameters" className="p-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Request Parameters</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12">
+                    <Code className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <div className="text-gray-500 mb-4">Parameter documentation</div>
+                    <div className="text-sm text-gray-400">
+                      Detailed parameter specifications and validation rules will be displayed here.
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="response" className="p-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Response Schema</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12">
+                    <Database className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <div className="text-gray-500 mb-4">Response schema and examples</div>
+                    <div className="text-sm text-gray-400">
+                      Response format, status codes, and example payloads will be displayed here.
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="examples" className="p-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Code Examples</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12">
+                    <Globe className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <div className="text-gray-500 mb-4">Usage examples</div>
+                    <div className="text-sm text-gray-400">
+                      Code examples in various programming languages will be displayed here.
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
