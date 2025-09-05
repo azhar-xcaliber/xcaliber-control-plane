@@ -1,452 +1,360 @@
 "use client"
 
 import { useState } from "react"
-import { ComponentLayout } from "./component-layout"
-import { ConfigurationList } from "./configuration-list"
+import { ComponentLayout } from "@/components/component-layout"
+import { ConfigurationList } from "@/components/configuration-list"
+import { DetailsDrawer } from "@/components/details-drawer"
+import { ConfigurationWorkflowDialog } from "@/components/configuration-workflow-dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Radio, GitBranch, Search, Plus, Activity, CheckCircle, AlertCircle, Clock, Database, Zap } from "lucide-react"
-import { DetailsDrawer } from "./details-drawer"
-import type { DataChannel, DataChannelListener } from "../types/channel"
+import { Radio, Activity, CheckCircle, AlertTriangle, Clock, Database, Workflow, Settings } from "lucide-react"
+import type { DataChannel } from "@/types/channel"
+import type { Activity as ActivityType } from "@/types/activity"
 
-// Mock data based on actual API structure
+interface ChannelsViewProps {
+  onActivitySelect: (activity: ActivityType) => void
+}
+
 const mockChannels: DataChannel[] = [
   {
-    id: "ch-001",
-    name: "patient-data-channel",
-    description: "Primary channel for patient demographic and clinical data",
-    version: "2.1.0",
+    id: "ch_patient_data",
+    name: "patient-data-stream",
+    description: "Real-time patient data streaming channel for Epic EHR integration",
+    version: "v2.1.0",
     status: "ACTIVE",
     syncStatus: "SYNCED",
-    createdBy: "system-admin",
     createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-03-10T14:22:00Z",
+    updatedAt: "2024-01-20T14:45:00Z",
+    createdBy: "john.doe@hospital.com",
+    throughput: {
+      messagesPerSecond: 1250,
+      bytesPerSecond: 2048000,
+      peakThroughput: 3500,
+    },
+    consumers: [
+      {
+        id: "consumer_patient_360",
+        name: "Patient 360 View",
+        status: "active",
+        lag: 0,
+        throughput: 1200,
+      },
+      {
+        id: "consumer_analytics",
+        name: "Clinical Analytics",
+        status: "active",
+        lag: 15,
+        throughput: 800,
+      },
+    ],
+    partitions: 12,
+    retentionPeriod: "7d",
+    compressionType: "gzip",
+    schema: {
+      version: "1.2.0",
+      fields: [
+        { name: "patient_id", type: "string", required: true },
+        { name: "encounter_id", type: "string", required: true },
+        { name: "timestamp", type: "datetime", required: true },
+        { name: "data", type: "object", required: true },
+      ],
+    },
+    metrics: {
+      totalMessages: 15420000,
+      errorRate: 0.02,
+      avgLatency: 45,
+      availability: 99.95,
+    },
   },
   {
-    id: "ch-002",
+    id: "ch_lab_results",
     name: "lab-results-channel",
-    description: "Channel for laboratory test results and diagnostic data",
-    version: "1.8.3",
+    description: "Laboratory results and diagnostic reports streaming channel",
+    version: "v1.8.3",
     status: "ACTIVE",
     syncStatus: "SYNCING",
-    createdBy: "data-engineer",
-    createdAt: "2024-02-01T09:15:00Z",
-    updatedAt: "2024-03-12T11:45:00Z",
+    createdAt: "2024-01-10T08:15:00Z",
+    updatedAt: "2024-01-21T09:30:00Z",
+    createdBy: "lab.admin@hospital.com",
+    throughput: {
+      messagesPerSecond: 450,
+      bytesPerSecond: 1024000,
+      peakThroughput: 1200,
+    },
+    consumers: [
+      {
+        id: "consumer_results_viewer",
+        name: "Results Viewer",
+        status: "active",
+        lag: 5,
+        throughput: 400,
+      },
+    ],
+    partitions: 6,
+    retentionPeriod: "30d",
+    compressionType: "snappy",
+    schema: {
+      version: "1.0.0",
+      fields: [
+        { name: "result_id", type: "string", required: true },
+        { name: "patient_id", type: "string", required: true },
+        { name: "test_type", type: "string", required: true },
+        { name: "result_value", type: "string", required: true },
+        { name: "reference_range", type: "string", required: false },
+      ],
+    },
+    metrics: {
+      totalMessages: 2340000,
+      errorRate: 0.01,
+      avgLatency: 32,
+      availability: 99.8,
+    },
   },
   {
-    id: "ch-003",
-    name: "billing-events-channel",
-    description: "Financial and billing event processing channel",
-    version: "1.5.2",
+    id: "ch_appointments",
+    name: "appointments-stream",
+    description: "Patient appointment scheduling and updates channel",
+    version: "v3.0.1",
     status: "INACTIVE",
     syncStatus: "FAILED",
-    createdBy: "billing-admin",
-    createdAt: "2024-01-20T16:00:00Z",
-    updatedAt: "2024-03-08T13:30:00Z",
+    createdAt: "2024-01-05T16:20:00Z",
+    updatedAt: "2024-01-19T11:15:00Z",
+    createdBy: "scheduling@hospital.com",
+    throughput: {
+      messagesPerSecond: 0,
+      bytesPerSecond: 0,
+      peakThroughput: 800,
+    },
+    consumers: [],
+    partitions: 4,
+    retentionPeriod: "14d",
+    compressionType: "lz4",
+    schema: {
+      version: "2.1.0",
+      fields: [
+        { name: "appointment_id", type: "string", required: true },
+        { name: "patient_id", type: "string", required: true },
+        { name: "provider_id", type: "string", required: true },
+        { name: "scheduled_time", type: "datetime", required: true },
+        { name: "status", type: "string", required: true },
+      ],
+    },
+    metrics: {
+      totalMessages: 890000,
+      errorRate: 0.15,
+      avgLatency: 120,
+      availability: 95.2,
+    },
   },
   {
-    id: "ch-004",
+    id: "ch_medications",
     name: "medication-orders-channel",
     description: "Medication orders and pharmacy integration channel",
-    version: "2.0.1",
-    status: "MODIFYING",
-    syncStatus: "PENDING",
-    createdBy: "pharmacy-lead",
-    createdAt: "2024-02-15T12:00:00Z",
-    updatedAt: "2024-03-11T16:20:00Z",
-  },
-  {
-    id: "ch-005",
-    name: "imaging-data-channel",
-    description: "Medical imaging and DICOM data processing channel",
-    version: "1.9.0",
+    version: "v1.5.2",
     status: "ACTIVE",
     syncStatus: "SYNCED",
-    createdBy: "radiology-tech",
-    createdAt: "2024-01-25T14:30:00Z",
-    updatedAt: "2024-03-09T10:15:00Z",
-  },
-]
-
-const mockChannelListeners: DataChannelListener[] = [
-  {
-    id: "cl-001",
-    createdAt: "2024-01-15T10:35:00Z",
-    createdBy: "system-admin",
-    status: "ACTIVE",
-    modifiedAt: "2024-03-10T14:25:00Z",
-    modifyBy: "data-engineer",
-    syncStatus: "SYNCED",
-    entityVersion: 3,
-    dataChannelName: "patient-data-channel",
-    dataSourceId: "ds-epic-001",
-    accountId: "acc-healthcare-main",
-    tenantId: "tenant-hospital-a",
-    namespaceId: "ns-clinical-data",
-    dataPipeline: {
-      id: "dp-001",
-      createdAt: "2024-01-15T10:35:00Z",
-      createdBy: "system-admin",
-      status: "ACTIVE",
-      modifiedAt: "2024-03-10T14:25:00Z",
-      modifyBy: "data-engineer",
-      syncStatus: "SYNCED",
-      entityVersion: 2,
-      name: "patient-data-pipeline",
-      description: "Pipeline for processing patient demographic and clinical data",
-      states: ["RECEIVED", "VALIDATED", "TRANSFORMED", "ENRICHED", "DELIVERED"],
-      stages: ["INGESTION", "VALIDATION", "TRANSFORMATION", "ENRICHMENT", "DELIVERY"],
+    createdAt: "2023-12-20T12:00:00Z",
+    updatedAt: "2024-01-18T16:30:00Z",
+    createdBy: "pharmacy@hospital.com",
+    throughput: {
+      messagesPerSecond: 180,
+      bytesPerSecond: 512000,
+      peakThroughput: 500,
     },
-  },
-  {
-    id: "cl-002",
-    createdAt: "2024-02-01T09:20:00Z",
-    createdBy: "data-engineer",
-    status: "ACTIVE",
-    modifiedAt: "2024-03-12T11:50:00Z",
-    modifyBy: "lab-technician",
-    syncStatus: "SYNCING",
-    entityVersion: 1,
-    dataChannelName: "lab-results-channel",
-    dataSourceId: "ds-labcorp-001",
-    accountId: "acc-healthcare-main",
-    tenantId: "tenant-hospital-a",
-    namespaceId: "ns-lab-data",
-    dataPipeline: {
-      id: "dp-002",
-      createdAt: "2024-02-01T09:20:00Z",
-      createdBy: "data-engineer",
-      status: "ACTIVE",
-      modifiedAt: "2024-03-12T11:50:00Z",
-      modifyBy: "lab-technician",
-      syncStatus: "SYNCING",
-      entityVersion: 1,
-      name: "lab-results-pipeline",
-      description: "Pipeline for processing laboratory test results",
-      states: ["RECEIVED", "VALIDATED", "NORMALIZED", "DELIVERED"],
-      stages: ["INGESTION", "VALIDATION", "NORMALIZATION", "DELIVERY"],
+    consumers: [
+      {
+        id: "consumer_pharmacy",
+        name: "Pharmacy System",
+        status: "active",
+        lag: 2,
+        throughput: 175,
+      },
+      {
+        id: "consumer_med_reconciliation",
+        name: "Med Reconciliation",
+        status: "paused",
+        lag: 450,
+        throughput: 0,
+      },
+    ],
+    partitions: 3,
+    retentionPeriod: "90d",
+    compressionType: "gzip",
+    schema: {
+      version: "1.1.0",
+      fields: [
+        { name: "order_id", type: "string", required: true },
+        { name: "patient_id", type: "string", required: true },
+        { name: "medication", type: "object", required: true },
+        { name: "dosage", type: "string", required: true },
+        { name: "frequency", type: "string", required: true },
+      ],
+    },
+    metrics: {
+      totalMessages: 1250000,
+      errorRate: 0.005,
+      avgLatency: 28,
+      availability: 99.9,
     },
   },
 ]
 
-// Mock Activity Data for Data Channels
 const mockActivityData = [
   {
     id: "act_ch_001",
     timestamp: new Date(Date.now() - 1000 * 60 * 5),
     type: "success" as const,
-    action: "Channel Sync Completed",
-    description: "Patient data channel successfully synchronized 1,247 records",
+    action: "Channel Message Processed",
+    description: "Patient data stream processed 1,250 messages successfully",
     user: "system",
     metadata: {
-      channelId: "ch-001",
-      recordsProcessed: 1247,
-      duration: "2.3s",
-      syncStatus: "SYNCED",
+      channelId: "ch_patient_data",
+      messagesProcessed: 1250,
+      throughput: "1.2k/sec",
+      latency: "45ms",
     },
   },
   {
     id: "act_ch_002",
-    timestamp: new Date(Date.now() - 1000 * 60 * 12),
+    timestamp: new Date(Date.now() - 1000 * 60 * 15),
     type: "error" as const,
-    action: "Channel Listener Failed",
-    description: "Billing events channel listener encountered connection timeout",
+    action: "Channel Sync Failed",
+    description: "Appointments stream sync failed due to schema validation error",
     user: "system",
     metadata: {
-      channelId: "ch-003",
-      listenerId: "cl-003",
-      error: "Connection timeout after 30s",
-      retryAttempt: 3,
+      channelId: "ch_appointments",
+      error: "Schema validation failed",
+      affectedMessages: 45,
+      retryScheduled: new Date(Date.now() + 1000 * 60 * 30),
     },
   },
   {
     id: "act_ch_003",
-    timestamp: new Date(Date.now() - 1000 * 60 * 18),
-    type: "warning" as const,
-    action: "Pipeline State Change",
-    description: "Lab results channel pipeline moved to MODIFYING state for maintenance",
-    user: "lab-technician",
+    timestamp: new Date(Date.now() - 1000 * 60 * 30),
+    type: "info" as const,
+    action: "Consumer Connected",
+    description: "New consumer 'Clinical Analytics' connected to patient-data-stream",
+    user: "system",
     metadata: {
-      channelId: "ch-002",
-      pipelineId: "dp-002",
-      previousState: "ACTIVE",
-      newState: "MODIFYING",
-      reason: "Scheduled maintenance",
+      channelId: "ch_patient_data",
+      consumerId: "consumer_analytics",
+      consumerName: "Clinical Analytics",
+      initialLag: 0,
     },
   },
   {
     id: "act_ch_004",
-    timestamp: new Date(Date.now() - 1000 * 60 * 25),
-    type: "info" as const,
-    action: "Channel Version Updated",
-    description: "Medication orders channel updated to version 2.0.1 with enhanced validation",
-    user: "pharmacy-lead",
-    metadata: {
-      channelId: "ch-004",
-      previousVersion: "2.0.0",
-      newVersion: "2.0.1",
-      features: ["Enhanced validation", "Improved error handling"],
-    },
-  },
-  {
-    id: "act_ch_005",
-    timestamp: new Date(Date.now() - 1000 * 60 * 35),
-    type: "success" as const,
-    action: "Pipeline Execution Completed",
-    description: "Imaging data pipeline successfully processed 89 DICOM files",
-    user: "system",
-    metadata: {
-      channelId: "ch-005",
-      pipelineId: "dp-003",
-      filesProcessed: 89,
-      totalSize: "2.3GB",
-    },
-  },
-  {
-    id: "act_ch_006",
     timestamp: new Date(Date.now() - 1000 * 60 * 45),
     type: "warning" as const,
-    action: "High Message Volume",
-    description: "Patient data channel experiencing higher than normal message volume",
+    action: "High Consumer Lag Detected",
+    description: "Med Reconciliation consumer showing high lag on medication orders channel",
     user: "system",
     metadata: {
-      channelId: "ch-001",
-      currentVolume: "3.2K msg/hour",
-      normalVolume: "2.1K msg/hour",
-      threshold: "3K msg/hour",
+      channelId: "ch_medications",
+      consumerId: "consumer_med_reconciliation",
+      currentLag: 450,
+      threshold: 100,
     },
   },
 ]
 
-// Mock Tasks Data for Data Channels
 const mockTasksData = [
   {
     id: "task_ch_001",
-    title: "Fix Billing Channel Connection Issues",
-    description: "Investigate and resolve persistent connection timeouts in billing events channel",
-    status: "in-progress" as const,
+    title: "Fix Appointments Channel Schema",
+    description: "Resolve schema validation errors causing sync failures in appointments stream",
+    status: "pending" as const,
     priority: "critical" as const,
-    assignee: "billing-admin",
-    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 2),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60),
-    tags: ["billing", "connection", "timeout", "urgent"],
-    metadata: {
-      channelId: "ch-003",
-      errorCount: 15,
-      lastError: "Connection timeout after 30s",
-    },
+    assignee: "data.engineer@hospital.com",
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 4),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
+    tags: ["schema", "appointments", "validation", "critical"],
   },
   {
     id: "task_ch_002",
-    title: "Complete Lab Pipeline Maintenance",
-    description: "Finish scheduled maintenance on lab results processing pipeline",
+    title: "Optimize Lab Results Throughput",
+    description: "Increase partition count and optimize compression for lab results channel",
     status: "in-progress" as const,
     priority: "high" as const,
-    assignee: "lab-technician",
-    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 4),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3),
-    tags: ["lab", "pipeline", "maintenance", "scheduled"],
-    metadata: {
-      channelId: "ch-002",
-      pipelineId: "dp-002",
-      maintenanceType: "Performance optimization",
-    },
+    assignee: "performance.team@hospital.com",
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8),
+    tags: ["performance", "lab-results", "optimization", "throughput"],
   },
   {
     id: "task_ch_003",
-    title: "Upgrade Imaging Channel Infrastructure",
-    description: "Plan and execute infrastructure upgrade for imaging data channel to handle increased DICOM volume",
-    status: "pending" as const,
-    priority: "medium" as const,
-    assignee: "radiology-tech",
-    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6),
-    tags: ["imaging", "infrastructure", "upgrade", "capacity"],
-    metadata: {
-      channelId: "ch-005",
-      currentCapacity: "100GB/day",
-      targetCapacity: "500GB/day",
-    },
-  },
-  {
-    id: "task_ch_004",
-    title: "Implement Channel Monitoring Alerts",
-    description: "Set up automated monitoring and alerting for all data channels",
-    status: "pending" as const,
-    priority: "medium" as const,
-    assignee: "system-admin",
-    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12),
-    tags: ["monitoring", "alerts", "automation", "ops"],
-    metadata: {
-      scope: "All channels",
-      alertTypes: ["Performance", "Errors", "Capacity"],
-    },
-  },
-  {
-    id: "task_ch_005",
-    title: "Optimize Patient Channel Performance",
-    description: "Review and optimize patient data channel to handle increased message volume",
+    title: "Resume Med Reconciliation Consumer",
+    description: "Investigate and resume the paused medication reconciliation consumer",
     status: "completed" as const,
-    priority: "high" as const,
-    assignee: "data-engineer",
+    priority: "medium" as const,
+    assignee: "ops.team@hospital.com",
     dueDate: new Date(Date.now() - 1000 * 60 * 60 * 12),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
-    tags: ["patient", "performance", "optimization", "completed"],
-    metadata: {
-      channelId: "ch-001",
-      improvementAchieved: "35% throughput increase",
-      completedAt: new Date(Date.now() - 1000 * 60 * 60 * 12),
-    },
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+    tags: ["consumer", "medications", "reconciliation", "operations"],
   },
 ]
 
-// Mock Configuration Data for Data Channels
 const mockConfigurationData = [
   {
     id: "config_ch_001",
-    name: "Channel Sync Interval",
-    type: "number",
-    value: 30,
-    description: "Default interval in seconds between channel synchronization attempts",
-    category: "Synchronization",
-    isEditable: true,
-    isRequired: true,
-    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-    modifiedBy: "system-admin",
-    defaultValue: 60,
-  },
-  {
-    id: "config_ch_002",
-    name: "Max Retry Attempts",
-    type: "number",
-    value: 5,
-    description: "Maximum number of retry attempts for failed channel operations",
-    category: "Error Handling",
-    isEditable: true,
-    isRequired: true,
-    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
-    modifiedBy: "ops-team",
-    defaultValue: 3,
-  },
-  {
-    id: "config_ch_003",
-    name: "Pipeline Buffer Size",
-    type: "number",
-    value: 1000,
-    description: "Maximum number of records in pipeline processing buffer",
-    category: "Performance",
-    isEditable: true,
-    isRequired: false,
-    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-    modifiedBy: "performance-team",
-    defaultValue: 500,
-  },
-  {
-    id: "config_ch_004",
-    name: "Connection Timeout",
-    type: "number",
-    value: 30,
-    description: "Connection timeout in seconds for channel listeners",
-    category: "Network",
+    name: "Default Message Retention",
+    type: "string",
+    value: "7d",
+    description: "Default retention period for channel messages",
+    category: "Storage",
     isEditable: true,
     isRequired: true,
     lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
-    modifiedBy: "network-admin",
-    defaultValue: 15,
+    modifiedBy: "admin@hospital.com",
+    defaultValue: "3d",
   },
   {
-    id: "config_ch_005",
-    name: "Enable Channel Monitoring",
-    type: "boolean",
-    value: true,
-    description: "Enable real-time monitoring and alerting for all data channels",
-    category: "Monitoring",
-    isEditable: true,
-    isRequired: false,
-    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1),
-    modifiedBy: "monitoring-team",
-    defaultValue: true,
-  },
-  {
-    id: "config_ch_006",
-    name: "Message Batch Size",
+    id: "config_ch_002",
+    name: "Max Throughput Threshold",
     type: "number",
-    value: 100,
-    description: "Number of messages to process in a single batch",
+    value: 5000,
+    description: "Maximum messages per second threshold for alerting",
     category: "Performance",
     isEditable: true,
-    isRequired: false,
-    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4),
-    modifiedBy: "data-engineer",
-    defaultValue: 50,
-  },
-  {
-    id: "config_ch_007",
-    name: "Audit Logging Level",
-    type: "string",
-    value: "DETAILED",
-    description: "Level of audit logging for channel operations (BASIC, DETAILED, VERBOSE)",
-    category: "Compliance",
-    isEditable: false,
     isRequired: true,
-    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
-    modifiedBy: "compliance-team",
-    defaultValue: "BASIC",
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24),
+    modifiedBy: "monitoring@hospital.com",
+    defaultValue: 3000,
   },
   {
-    id: "config_ch_008",
-    name: "Enable Data Encryption",
+    id: "config_ch_003",
+    name: "Auto-Scale Partitions",
     type: "boolean",
     value: true,
-    description: "Enable end-to-end encryption for all channel data transmission",
-    category: "Security",
-    isEditable: false,
-    isRequired: true,
-    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60),
-    modifiedBy: "security-team",
-    defaultValue: true,
+    description: "Automatically scale partition count based on throughput",
+    category: "Scaling",
+    isEditable: true,
+    isRequired: false,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 12),
+    modifiedBy: "platform@hospital.com",
+    defaultValue: false,
   },
   {
-    id: "config_ch_009",
-    name: "Channel Health Check Interval",
+    id: "config_ch_004",
+    name: "Consumer Lag Alert Threshold",
     type: "number",
-    value: 60,
-    description: "Interval in seconds for channel health status checks",
+    value: 100,
+    description: "Consumer lag threshold in messages before triggering alerts",
     category: "Monitoring",
     isEditable: true,
-    isRequired: false,
-    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8),
-    modifiedBy: "ops-team",
-    defaultValue: 120,
-  },
-  {
-    id: "config_ch_010",
-    name: "Dead Letter Queue Enabled",
-    type: "boolean",
-    value: true,
-    description: "Enable dead letter queue for failed message processing",
-    category: "Error Handling",
-    isEditable: true,
-    isRequired: false,
-    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6),
-    modifiedBy: "data-engineer",
-    defaultValue: false,
+    isRequired: true,
+    lastModified: new Date(Date.now() - 1000 * 60 * 60 * 6),
+    modifiedBy: "ops@hospital.com",
+    defaultValue: 50,
   },
 ]
 
-export function ChannelsView() {
+export function ChannelsView({ onActivitySelect }: ChannelsViewProps) {
   const [selectedItem, setSelectedItem] = useState<DataChannel | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-
-  const filteredChannels = mockChannels.filter(
-    (channel) =>
-      channel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      channel.description.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const [isWorkflowDialogOpen, setIsWorkflowDialogOpen] = useState(false)
+  const [selectedDataModel, setSelectedDataModel] = useState<any>(null)
 
   const handleItemSelect = (item: DataChannel) => {
     setSelectedItem(item)
@@ -458,84 +366,80 @@ export function ChannelsView() {
     setIsDrawerOpen(true)
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return <CheckCircle className="w-4 h-4 text-green-600" />
-      case "INACTIVE":
-        return <AlertCircle className="w-4 h-4 text-gray-500" />
-      case "MODIFYING":
-        return <Clock className="w-4 h-4 text-blue-600" />
-      case "ERROR":
-        return <AlertCircle className="w-4 h-4 text-red-600" />
-      default:
-        return <Clock className="w-4 h-4 text-yellow-600" />
-    }
+  const handleRefresh = () => {
+    console.log("Refreshing channels...")
   }
 
-  const getSyncStatusIcon = (syncStatus: string) => {
-    switch (syncStatus) {
-      case "SYNCED":
-        return <CheckCircle className="w-4 h-4 text-green-600" />
-      case "SYNCING":
-        return <Activity className="w-4 h-4 text-blue-600 animate-pulse" />
-      case "FAILED":
-        return <AlertCircle className="w-4 h-4 text-red-600" />
-      default:
-        return <Clock className="w-4 h-4 text-yellow-600" />
-    }
+  const handleDataModelSelect = (dataModel: any) => {
+    setSelectedDataModel(dataModel)
+    setIsWorkflowDialogOpen(true)
   }
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toUpperCase()) {
       case "ACTIVE":
         return "bg-green-100 text-green-700"
       case "INACTIVE":
         return "bg-gray-100 text-gray-700"
-      case "MODIFYING":
-        return "bg-blue-100 text-blue-700"
       case "ERROR":
         return "bg-red-100 text-red-700"
-      default:
+      case "PENDING":
         return "bg-yellow-100 text-yellow-700"
+      default:
+        return "bg-gray-100 text-gray-700"
     }
   }
 
   const getSyncStatusColor = (syncStatus: string) => {
-    switch (syncStatus) {
+    switch (syncStatus.toUpperCase()) {
       case "SYNCED":
         return "bg-green-100 text-green-700"
       case "SYNCING":
         return "bg-blue-100 text-blue-700"
       case "FAILED":
         return "bg-red-100 text-red-700"
-      default:
+      case "PENDING":
         return "bg-yellow-100 text-yellow-700"
+      default:
+        return "bg-gray-100 text-gray-700"
     }
   }
 
-  const handleRefresh = () => {
-    console.log("Refreshing data channels...")
+  const getSyncStatusIcon = (syncStatus: string) => {
+    switch (syncStatus.toUpperCase()) {
+      case "SYNCED":
+        return <CheckCircle className="w-4 h-4" />
+      case "SYNCING":
+        return <Activity className="w-4 h-4 animate-spin" />
+      case "FAILED":
+        return <AlertTriangle className="w-4 h-4" />
+      case "PENDING":
+        return <Clock className="w-4 h-4" />
+      default:
+        return <Activity className="w-4 h-4" />
+    }
   }
 
-  // Calculate statistics
-  const totalChannels = mockChannels.length
-  const activeChannels = mockChannels.filter((c) => c.status === "ACTIVE").length
-  const syncedChannels = mockChannels.filter((c) => c.syncStatus === "SYNCED").length
-  const totalListeners = mockChannelListeners.length
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return "0 B"
+    const k = 1024
+    const sizes = ["B", "KB", "MB", "GB"]
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i]
+  }
 
   const dashboardContent = (
-    <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="p-6 space-y-6">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Channels</p>
-                <p className="text-2xl font-bold text-gray-900">{totalChannels}</p>
+                <p className="text-sm text-gray-600">Total Channels</p>
+                <p className="text-2xl font-bold text-gray-900">{mockChannels.length}</p>
               </div>
-              <Radio className="w-8 h-8 text-blue-600" />
+              <Radio className="w-8 h-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
@@ -544,10 +448,12 @@ export function ChannelsView() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Channels</p>
-                <p className="text-2xl font-bold text-green-600">{activeChannels}</p>
+                <p className="text-sm text-gray-600">Active Channels</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {mockChannels.filter((ch) => ch.status === "ACTIVE").length}
+                </p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircle className="w-8 h-8 text-green-500" />
             </div>
           </CardContent>
         </Card>
@@ -556,10 +462,13 @@ export function ChannelsView() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Synced Channels</p>
-                <p className="text-2xl font-bold text-blue-600">{syncedChannels}</p>
+                <p className="text-sm text-gray-600">Total Throughput</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {mockChannels.reduce((sum, ch) => sum + ch.throughput.messagesPerSecond, 0).toLocaleString()}
+                  /s
+                </p>
               </div>
-              <Zap className="w-8 h-8 text-blue-600" />
+              <Activity className="w-8 h-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
@@ -568,150 +477,111 @@ export function ChannelsView() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Channel Listeners</p>
-                <p className="text-2xl font-bold text-purple-600">{totalListeners}</p>
+                <p className="text-sm text-gray-600">Avg Availability</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {(mockChannels.reduce((sum, ch) => sum + ch.metrics.availability, 0) / mockChannels.length).toFixed(
+                    1,
+                  )}
+                  %
+                </p>
               </div>
-              <Database className="w-8 h-8 text-purple-600" />
+              <Database className="w-8 h-8 text-purple-500" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Status Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Channel Status Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {["ACTIVE", "INACTIVE", "MODIFYING", "ERROR"].map((status) => {
-                const count = mockChannels.filter((c) => c.status === status).length
-                const percentage = totalChannels > 0 ? (count / totalChannels) * 100 : 0
-                return (
-                  <div key={status} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(status)}
-                      <span className="text-sm font-medium">{status}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-20 bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full ${
-                            status === "ACTIVE"
-                              ? "bg-green-500"
-                              : status === "INACTIVE"
-                                ? "bg-gray-500"
-                                : status === "MODIFYING"
-                                  ? "bg-blue-500"
-                                  : "bg-red-500"
-                          }`}
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-600 w-8">{count}</span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Sync Status Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {["SYNCED", "SYNCING", "FAILED", "PENDING"].map((syncStatus) => {
-                const count = mockChannels.filter((c) => c.syncStatus === syncStatus).length
-                const percentage = totalChannels > 0 ? (count / totalChannels) * 100 : 0
-                return (
-                  <div key={syncStatus} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {getSyncStatusIcon(syncStatus)}
-                      <span className="text-sm font-medium">{syncStatus}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-20 bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full ${
-                            syncStatus === "SYNCED"
-                              ? "bg-green-500"
-                              : syncStatus === "SYNCING"
-                                ? "bg-blue-500"
-                                : syncStatus === "FAILED"
-                                  ? "bg-red-500"
-                                  : "bg-yellow-500"
-                          }`}
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-600 w-8">{count}</span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Channels List */}
+      {/* Data Models Section */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">Data Channels</CardTitle>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search channels..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
-                />
-              </div>
-              <Button onClick={handleCreateNew}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Channel
-              </Button>
-            </div>
+            <CardTitle className="flex items-center gap-2">
+              <Workflow className="w-5 h-5" />
+              Data Models & Workflows
+            </CardTitle>
+            <Button onClick={() => handleDataModelSelect({ name: "Patient 360 View" })}>
+              <Settings className="w-4 h-4 mr-2" />
+              Configure Workflow
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {filteredChannels.map((channel) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              {
+                id: "dm_patient_360",
+                name: "Patient 360 View",
+                description: "Comprehensive patient data model with full clinical history",
+                status: "active",
+                channels: ["patient-data-stream", "lab-results-channel"],
+                layers: ["Bronze", "Silver", "Gold"],
+              },
+              {
+                id: "dm_clinical_analytics",
+                name: "Clinical Analytics",
+                description: "Analytics-ready clinical data for reporting and insights",
+                status: "active",
+                channels: ["patient-data-stream", "medication-orders-channel"],
+                layers: ["Bronze", "Silver", "Gold"],
+              },
+              {
+                id: "dm_quality_metrics",
+                name: "Quality Metrics",
+                description: "Healthcare quality metrics and performance indicators",
+                status: "inactive",
+                channels: ["appointments-stream"],
+                layers: ["Bronze", "Silver"],
+              },
+            ].map((model) => (
               <Card
-                key={channel.id}
-                className="hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleItemSelect(channel)}
+                key={model.id}
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleDataModelSelect(model)}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <Radio className="w-5 h-5 text-blue-600 mt-1" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-gray-900 truncate">{channel.name}</h3>
-                          <Badge variant="outline" className="text-xs">
-                            v{channel.version}
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-4 h-4 text-blue-500" />
+                      <h4 className="font-medium">{model.name}</h4>
+                    </div>
+                    <Badge
+                      className={
+                        model.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
+                      }
+                    >
+                      {model.status}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">{model.description}</p>
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-xs font-medium text-gray-500">Channels:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {model.channels.map((channel, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {channel}
                           </Badge>
-                          <Badge className={getStatusColor(channel.status)}>{channel.status}</Badge>
-                          <Badge className={getSyncStatusColor(channel.syncStatus)}>{channel.syncStatus}</Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">{channel.description}</p>
-                        <div className="text-xs text-gray-500">
-                          <span>Created by {channel.createdBy}</span>
-                          <span className="mx-2">•</span>
-                          <span>Updated {new Date(channel.updatedAt).toLocaleDateString()}</span>
-                        </div>
+                        ))}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(channel.status)}
-                      {getSyncStatusIcon(channel.syncStatus)}
+                    <div>
+                      <span className="text-xs font-medium text-gray-500">Layers:</span>
+                      <div className="flex gap-1 mt-1">
+                        {model.layers.map((layer, index) => (
+                          <Badge
+                            key={index}
+                            className={
+                              layer === "Bronze"
+                                ? "bg-amber-100 text-amber-700"
+                                : layer === "Silver"
+                                  ? "bg-slate-100 text-slate-700"
+                                  : "bg-yellow-100 text-yellow-700"
+                            }
+                          >
+                            {layer}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -721,57 +591,49 @@ export function ChannelsView() {
         </CardContent>
       </Card>
 
-      {/* Channel Listeners */}
+      {/* Channel Performance */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Channel Listeners & Pipelines</CardTitle>
+          <CardTitle>Channel Performance</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockChannelListeners.map((listener) => (
-              <Card key={listener.id} className="border-l-4 border-l-purple-500">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <GitBranch className="w-5 h-5 text-purple-600 mt-1" />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-medium text-gray-900">{listener.dataChannelName}</h4>
-                          <Badge variant="outline" className="text-xs">
-                            v{listener.entityVersion}
-                          </Badge>
-                          <Badge className={getStatusColor(listener.status)}>{listener.status}</Badge>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-gray-600">
-                              Pipeline: <span className="font-medium">{listener.dataPipeline.name}</span>
-                            </p>
-                            <p className="text-gray-600">
-                              Namespace: <span className="font-medium">{listener.namespaceId}</span>
-                            </p>
-                            <p className="text-gray-600">
-                              Data Source: <span className="font-medium">{listener.dataSourceId}</span>
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">
-                              States: <span className="font-medium">{listener.dataPipeline.states.join(", ")}</span>
-                            </p>
-                            <p className="text-gray-600">
-                              Stages: <span className="font-medium">{listener.dataPipeline.stages.join(", ")}</span>
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(listener.status)}
-                      {getSyncStatusIcon(listener.syncStatus)}
+            {mockChannels.slice(0, 3).map((channel) => (
+              <div
+                key={channel.id}
+                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => handleItemSelect(channel)}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Radio className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">{channel.name}</h4>
+                    <p className="text-sm text-gray-600">{channel.description}</p>
+                    <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                      <span>v{channel.version}</span>
+                      <span>{channel.partitions} partitions</span>
+                      <span>{channel.consumers.length} consumers</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right text-sm">
+                    <div className="font-medium">{channel.throughput.messagesPerSecond.toLocaleString()}/s</div>
+                    <div className="text-gray-500">{formatBytes(channel.throughput.bytesPerSecond)}/s</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getStatusColor(channel.status)}>{channel.status}</Badge>
+                    <Badge className={getSyncStatusColor(channel.syncStatus)}>
+                      <div className="flex items-center gap-1">
+                        {getSyncStatusIcon(channel.syncStatus)}
+                        {channel.syncStatus}
+                      </div>
+                    </Badge>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </CardContent>
@@ -795,7 +657,7 @@ export function ChannelsView() {
         if (channel) handleItemSelect(channel)
       }}
       onCreateNew={handleCreateNew}
-      itemType="Data Channel"
+      itemType="Channel"
     />
   )
 
@@ -803,7 +665,7 @@ export function ChannelsView() {
     <>
       <ComponentLayout
         title="Data Channels"
-        description="Manage data channels, listeners, and processing pipelines"
+        description="Manage real-time data streaming channels and message queues"
         dashboardContent={dashboardContent}
         configurationContent={configurationContent}
         onRefresh={handleRefresh}
@@ -818,8 +680,14 @@ export function ChannelsView() {
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         item={selectedItem}
-        title={selectedItem?.name || "New Data Channel"}
-        itemType="Data Channel"
+        title={selectedItem?.name || "New Channel"}
+        itemType="Channel"
+      />
+
+      <ConfigurationWorkflowDialog
+        isOpen={isWorkflowDialogOpen}
+        onClose={() => setIsWorkflowDialogOpen(false)}
+        dataModel={selectedDataModel}
       />
     </>
   )

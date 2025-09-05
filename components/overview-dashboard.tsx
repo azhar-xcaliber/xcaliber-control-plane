@@ -276,7 +276,7 @@ export function OverviewDashboard({ pod, tenant }: OverviewDashboardProps) {
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="configuration">Configuration</TabsTrigger>
               <TabsTrigger value="activity">Activity Feed</TabsTrigger>
-              <TabsTrigger value="tasks">To-do List</TabsTrigger>
+              <TabsTrigger value="tasks">Tasks</TabsTrigger>
               <TabsTrigger value="billing">Billing</TabsTrigger>
             </TabsList>
           </Tabs>
