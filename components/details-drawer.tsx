@@ -8,34 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  X,
-  Save,
-  Power,
-  Copy,
-  Trash2,
-  Edit3,
-  Lock,
-  Send as Sync,
-  CheckCircle,
-  AlertTriangle,
-  Clock,
-  Database,
-  Workflow,
-  Plug,
-  FileText,
-  Settings,
-  Key,
-  Eye,
-  EyeOff,
-  Radio,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { X, Save, Power, Copy, Trash2, Edit3, Lock, Send as Sync, CheckCircle, AlertTriangle, Clock, Database, Workflow, Plug, FileText, Settings, Key, Eye, EyeOff, Radio, BoxSelect as Select, TableOfContents as SelectContent, BoxSelect as SelectItem, BoxSelect as SelectTrigger, BoxSelect as SelectValue } from "lucide-react"
 import type { DataSource } from "@/types/datasource"
 import type { DataChannel } from "@/types/channel"
 
