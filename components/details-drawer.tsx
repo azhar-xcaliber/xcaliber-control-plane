@@ -29,7 +29,13 @@ import {
   Eye,
   EyeOff,
   Radio,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { DataSource } from "@/types/datasource"
 import type { DataChannel } from "@/types/channel"
 
@@ -197,25 +203,166 @@ export function DetailsDrawer({ isOpen, onClose, item, title, itemType }: Detail
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>Status</Label>
-                    <div className="mt-1">
-                      <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
-                    </div>
+                    {isEditing ? (
+                      <Select
+                        value={formData.status || item.status}
+                        onValueChange={(value) => setFormData({ ...formData, status: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PENDING">PENDING</SelectItem>
+                          <SelectItem value="INACTIVE">INACTIVE</SelectItem>
+                          <SelectItem value="MODIFYING">MODIFYING</SelectItem>
+                          <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+                          <SelectItem value="ERROR">ERROR</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="mt-1">
+                        <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <Label>Sync Status</Label>
-                    <div className="mt-1">
-                      <Badge className={getSyncStatusColor(item.syncStatus)}>
-                        <div className="flex items-center gap-1">
-                          {getSyncStatusIcon(item.syncStatus)}
-                          {item.syncStatus}
-                        </div>
-                      </Badge>
-                    </div>
+                    {isEditing ? (
+                      <Select
+                        value={formData.syncStatus || item.syncStatus}
+                        onValueChange={(value) => setFormData({ ...formData, syncStatus: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PENDING">PENDING</SelectItem>
+                          <SelectItem value="MODIFYING">MODIFYING</SelectItem>
+                          <SelectItem value="SYNCED">SYNCED</SelectItem>
+                          <SelectItem value="FAILED">FAILED</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="mt-1">
+                        <Badge className={getSyncStatusColor(item.syncStatus)}>
+                          <div className="flex items-center gap-1">
+                            {getSyncStatusIcon(item.syncStatus)}
+                            {item.syncStatus}
+                          </div>
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
               <Separator />
+
+              {/* Channel Listeners */}
+              {item.dataChannelListeners && item.dataChannelListeners.length > 0 && (
+                <>
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                      <Workflow className="w-4 h-4" />
+                      Data Channel Listeners ({item.dataChannelListeners.length})
+                    </h3>
+
+                    {item.dataChannelListeners.map((listener: any, index: number) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium">{listener.dataChannelName}</h4>
+                            <p className="text-sm text-gray-600">Data Source: {listener.dataSourceId}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge className={getStatusColor(listener.status)}>{listener.status}</Badge>
+                            <Badge className={getSyncStatusColor(listener.syncStatus)}>
+                              <div className="flex items-center gap-1">
+                                {getSyncStatusIcon(listener.syncStatus)}
+                                {listener.syncStatus}
+                              </div>
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {listener.dataPipeline && (
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Workflow className="w-4 h-4 text-blue-500" />
+                              <span className="font-medium text-sm">{listener.dataPipeline.name}</span>
+                            </div>
+                            <p className="text-xs text-gray-600 mb-2">{listener.dataPipeline.description}</p>
+                            
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div>
+                                <span className="text-gray-500">States:</span>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {listener.dataPipeline.states?.map((state: string, stateIndex: number) => (
+                                    <Badge key={stateIndex} variant="outline" className="text-xs">
+                                      {state}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">Stages:</span>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {listener.dataPipeline.stages?.map((stage: string, stageIndex: number) => (
+                                    <Badge key={stageIndex} variant="outline" className="text-xs">
+                                      {stage}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <span className="text-gray-500">Account ID:</span>
+                            <div className="font-mono">{listener.accountId}</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Tenant ID:</span>
+                            <div className="font-mono">{listener.tenantId}</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Namespace:</span>
+                            <div className="font-mono">{listener.namespaceId}</div>
+                          </div>
+                        </div>
+
+                        {isEditing && (
+                          <div className="pt-2 border-t border-gray-200">
+                            <Label className="text-xs">Update Listener Status</Label>
+                            <Select
+                              value={listener.status}
+                              onValueChange={(value) => {
+                                // Handle listener status update
+                                console.log("Updating listener status:", listener.id, value)
+                              }}
+                            >
+                              <SelectTrigger className="mt-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="PENDING">PENDING</SelectItem>
+                                <SelectItem value="INACTIVE">INACTIVE</SelectItem>
+                                <SelectItem value="MODIFYING">MODIFYING</SelectItem>
+                                <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+                                <SelectItem value="ERROR">ERROR</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator />
+                </>
+              )}
 
               {/* Metadata */}
               <div className="space-y-3">
@@ -225,6 +372,7 @@ export function DetailsDrawer({ isOpen, onClose, item, title, itemType }: Detail
                   <div>Created: {new Date(item.createdAt).toLocaleString()}</div>
                   <div>Created by: {item.createdBy}</div>
                   <div>Updated: {new Date(item.updatedAt).toLocaleString()}</div>
+                  <div>Entity Version: {item.entityVersion || 'N/A'}</div>
                 </div>
               </div>
             </div>
