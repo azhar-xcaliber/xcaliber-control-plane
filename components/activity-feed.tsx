@@ -5,143 +5,70 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Activity, CheckCircle, AlertTriangle, Clock, Workflow, Bot, Database } from "lucide-react"
-import type { Activity as ActivityType } from "@/types/activity"
+import { Search, ActivityIcon, CheckCircle, AlertTriangle, Clock, Zap } from "lucide-react"
+import type { Activity } from "@/types/activity"
+import { mockActivities } from "@/lib/mock-activities"
 
 interface ActivityFeedProps {
-  onActivitySelect: (activity: ActivityType) => void
+  onActivitySelect: (activity: Activity) => void
   pod: string
   tenant: string
 }
-
-const mockActivities: ActivityType[] = [
-  {
-    id: "act_001",
-    type: "workflow",
-    name: "Patient Data Processing Workflow",
-    status: "success",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    duration: 2340,
-    tenant: "Henry Ford Health",
-    metadata: {
-      workflowId: "wf_001",
-      recordsProcessed: 1247,
-      source: "EMR System",
-    },
-  },
-  {
-    id: "act_002",
-    type: "agent-interaction",
-    name: "Data Quality Validation Agent",
-    status: "running",
-    timestamp: new Date(Date.now() - 1000 * 60 * 2),
-    duration: null,
-    tenant: "Henry Ford Health",
-    metadata: {
-      agentId: "agent_001",
-      operation: "data_validation",
-      progress: 67,
-    },
-  },
-  {
-    id: "act_003",
-    type: "data-ingestion",
-    name: "Lab Results Import",
-    status: "failed",
-    timestamp: new Date(Date.now() - 1000 * 60 * 10),
-    duration: 890,
-    tenant: "TechStart Inc",
-    metadata: {
-      source: "Lab API",
-      error: "Connection timeout",
-      retryCount: 3,
-    },
-  },
-  {
-    id: "act_004",
-    type: "workflow",
-    name: "Insurance Claims Processing",
-    status: "success",
-    timestamp: new Date(Date.now() - 1000 * 60 * 15),
-    duration: 5670,
-    tenant: "Global Systems",
-    metadata: {
-      workflowId: "wf_002",
-      claimsProcessed: 234,
-      approvedClaims: 189,
-    },
-  },
-  {
-    id: "act_005",
-    type: "api-call",
-    name: "FHIR Patient Resource Access",
-    status: "success",
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    duration: 45,
-    tenant: "Henry Ford Health",
-    metadata: {
-      endpoint: "/Patient/12345",
-      method: "GET",
-      responseCode: 200,
-    },
-  },
-]
 
 export function ActivityFeed({ onActivitySelect, pod, tenant }: ActivityFeedProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedType, setSelectedType] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
-  const [selectedTenant, setSelectedTenant] = useState("all")
+  const [selectedService, setSelectedService] = useState("all")
 
   const filteredActivities = mockActivities.filter((activity) => {
     const matchesSearch =
-      activity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activity.type.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesType = selectedType === "all" || activity.type === selectedType
-    const matchesStatus = selectedStatus === "all" || activity.status === selectedStatus
-    const matchesTenant = selectedTenant === "all" || activity.tenant === selectedTenant
+      activity.event_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity.service_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity.url.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesType = selectedType === "all" || activity.api_type === selectedType
+    const matchesStatus = selectedStatus === "all" || activity.status_code.startsWith(selectedStatus)
+    const matchesService = selectedService === "all" || activity.service_name === selectedService
 
-    return matchesSearch && matchesType && matchesStatus && matchesTenant
+    return matchesSearch && matchesType && matchesStatus && matchesService
   })
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "success":
-        return <CheckCircle className="w-4 h-4 text-green-500" />
-      case "running":
-        return <Activity className="w-4 h-4 text-blue-500" />
-      case "failed":
-        return <AlertTriangle className="w-4 h-4 text-red-500" />
-      default:
-        return <Clock className="w-4 h-4 text-gray-500" />
+  const getStatusIcon = (statusCode: string) => {
+    const code = Number.parseInt(statusCode)
+    if (code >= 200 && code < 300) {
+      return <CheckCircle className="w-4 h-4 text-green-500" />
+    } else if (code >= 400 && code < 500) {
+      return <AlertTriangle className="w-4 h-4 text-yellow-500" />
+    } else if (code >= 500) {
+      return <AlertTriangle className="w-4 h-4 text-red-500" />
     }
+    return <Clock className="w-4 h-4 text-gray-500" />
   }
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "workflow":
-        return <Workflow className="w-4 h-4 text-purple-500" />
-      case "agent-interaction":
-        return <Bot className="w-4 h-4 text-orange-500" />
-      case "data-ingestion":
-        return <Database className="w-4 h-4 text-blue-500" />
-      case "api-call":
-        return <Activity className="w-4 h-4 text-green-500" />
-      default:
-        return <Activity className="w-4 h-4 text-gray-500" />
+  const getStatusColor = (statusCode: string) => {
+    const code = Number.parseInt(statusCode)
+    if (code >= 200 && code < 300) {
+      return "bg-green-100 text-green-700"
+    } else if (code >= 400 && code < 500) {
+      return "bg-yellow-100 text-yellow-700"
+    } else if (code >= 500) {
+      return "bg-red-100 text-red-700"
     }
+    return "bg-gray-100 text-gray-700"
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "success":
-        return "bg-green-100 text-green-700"
-      case "running":
-        return "bg-blue-100 text-blue-700"
-      case "failed":
-        return "bg-red-100 text-red-700"
+  const getApiTypeIcon = (apiType: string) => {
+    switch (apiType) {
+      case "REST":
+        return <Zap className="w-4 h-4 text-blue-500" />
+      case "RPC":
+        return <Zap className="w-4 h-4 text-purple-500" />
+      case "WEBHOOK":
+        return <Zap className="w-4 h-4 text-orange-500" />
+      case "SYSTEM":
+        return <Zap className="w-4 h-4 text-gray-500" />
       default:
-        return "bg-gray-100 text-gray-700"
+        return <ActivityIcon className="w-4 h-4 text-gray-500" />
     }
   }
 
@@ -152,7 +79,7 @@ export function ActivityFeed({ onActivitySelect, pod, tenant }: ActivityFeedProp
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Activity Feed</h2>
-            <p className="text-sm text-gray-500">Real-time activity across the platform</p>
+            <p className="text-sm text-gray-500">Real-time API trace activities across the platform</p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-sm">
@@ -175,14 +102,14 @@ export function ActivityFeed({ onActivitySelect, pod, tenant }: ActivityFeedProp
 
           <Select value={selectedType} onValueChange={setSelectedType}>
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="Type" />
+              <SelectValue placeholder="API Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="workflow">Workflows</SelectItem>
-              <SelectItem value="agent-interaction">Agents</SelectItem>
-              <SelectItem value="data-ingestion">Data</SelectItem>
-              <SelectItem value="api-call">API Calls</SelectItem>
+              <SelectItem value="REST">REST</SelectItem>
+              <SelectItem value="RPC">RPC</SelectItem>
+              <SelectItem value="WEBHOOK">Webhook</SelectItem>
+              <SelectItem value="SYSTEM">System</SelectItem>
             </SelectContent>
           </Select>
 
@@ -192,21 +119,23 @@ export function ActivityFeed({ onActivitySelect, pod, tenant }: ActivityFeedProp
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="success">Success</SelectItem>
-              <SelectItem value="running">Running</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
+              <SelectItem value="2">2xx Success</SelectItem>
+              <SelectItem value="4">4xx Client Error</SelectItem>
+              <SelectItem value="5">5xx Server Error</SelectItem>
             </SelectContent>
           </Select>
 
-          <Select value={selectedTenant} onValueChange={setSelectedTenant}>
+          <Select value={selectedService} onValueChange={setSelectedService}>
             <SelectTrigger className="w-48">
-              <SelectValue placeholder="Tenant" />
+              <SelectValue placeholder="Service" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Tenants</SelectItem>
-              <SelectItem value="Henry Ford Health">Henry Ford Health</SelectItem>
-              <SelectItem value="TechStart Inc">TechStart Inc</SelectItem>
-              <SelectItem value="Global Systems">Global Systems</SelectItem>
+              <SelectItem value="all">All Services</SelectItem>
+              <SelectItem value="data-catalog-api">Data Catalog API</SelectItem>
+              <SelectItem value="workflow-orchestrator">Workflow Orchestrator</SelectItem>
+              <SelectItem value="connector-service-athena">Connector Service</SelectItem>
+              <SelectItem value="analytics-query-engine">Analytics Engine</SelectItem>
+              <SelectItem value="health-monitor">Health Monitor</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -224,66 +153,62 @@ export function ActivityFeed({ onActivitySelect, pod, tenant }: ActivityFeedProp
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className="p-2 bg-gray-100 rounded-lg">{getTypeIcon(activity.type)}</div>
+                    <div className="p-2 bg-gray-100 rounded-lg">{getApiTypeIcon(activity.api_type)}</div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900">{activity.name}</h3>
-                        <Badge variant="outline" className="text-xs capitalize">
-                          {activity.type.replace("-", " ")}
+                        <h3 className="font-semibold text-gray-900">{activity.event_id}</h3>
+                        <Badge variant="outline" className="text-xs">
+                          {activity.api_type}
                         </Badge>
-                        <Badge className={getStatusColor(activity.status)}>
-                          {getStatusIcon(activity.status)}
-                          <span className="ml-1 capitalize">{activity.status}</span>
+                        <Badge className={getStatusColor(activity.status_code)}>
+                          {getStatusIcon(activity.status_code)}
+                          <span className="ml-1">{activity.status_code}</span>
                         </Badge>
+                        {activity.cache_hit && (
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                            Cached
+                          </Badge>
+                        )}
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-2">
                         <div>
-                          <span className="font-medium">Tenant:</span>
-                          <div className="truncate">{activity.tenant}</div>
+                          <span className="font-medium">Service:</span>
+                          <div className="truncate">{activity.service_name}</div>
                         </div>
                         <div>
-                          <span className="font-medium">Time:</span>
-                          <div>{activity.timestamp.toLocaleTimeString()}</div>
+                          <span className="font-medium">Method:</span>
+                          <div>{activity.method}</div>
                         </div>
                         <div>
-                          <span className="font-medium">Duration:</span>
-                          <div>
-                            {activity.duration
-                              ? `${activity.duration}ms`
-                              : activity.status === "running"
-                                ? "Running..."
-                                : "N/A"}
-                          </div>
+                          <span className="font-medium">Response Time:</span>
+                          <div>{activity.response_time}ms</div>
                         </div>
                         <div>
-                          <span className="font-medium">ID:</span>
-                          <div className="font-mono text-xs">{activity.id}</div>
+                          <span className="font-medium">Request ID:</span>
+                          <div className="font-mono text-xs truncate">{activity.request_id}</div>
                         </div>
+                      </div>
+
+                      <div className="text-xs text-gray-500 mb-2">
+                        <span className="font-medium">URL:</span> {activity.url}
                       </div>
 
                       {/* Activity-specific metadata */}
-                      {activity.metadata && (
-                        <div className="mt-3 text-xs text-gray-500">
-                          {activity.type === "workflow" && activity.metadata.recordsProcessed && (
-                            <span>Processed {activity.metadata.recordsProcessed} records</span>
-                          )}
-                          {activity.type === "agent-interaction" && activity.metadata.progress && (
-                            <span>Progress: {activity.metadata.progress}%</span>
-                          )}
-                          {activity.type === "data-ingestion" && activity.metadata.error && (
-                            <span className="text-red-600">Error: {activity.metadata.error}</span>
-                          )}
-                          {activity.type === "api-call" && activity.metadata.responseCode && (
-                            <span>Response: {activity.metadata.responseCode}</span>
-                          )}
+                      {activity.attributes && Object.keys(activity.attributes).length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {Object.entries(activity.attributes).map(([key, value]) => (
+                            <Badge key={key} variant="outline" className="text-xs">
+                              {key}: {String(value)}
+                            </Badge>
+                          ))}
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="text-xs text-gray-400">{activity.timestamp.toLocaleDateString()}</div>
+                  <div className="text-xs text-gray-400">{new Date(activity.timestamp).toLocaleString()}</div>
                 </div>
               </CardContent>
             </Card>
@@ -291,7 +216,7 @@ export function ActivityFeed({ onActivitySelect, pod, tenant }: ActivityFeedProp
 
           {filteredActivities.length === 0 && (
             <div className="text-center py-12">
-              <Activity className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <ActivityIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <div className="text-gray-500 mb-4">No activities found</div>
               <div className="text-sm text-gray-400">
                 Try adjusting your search criteria or check back later for new activities.

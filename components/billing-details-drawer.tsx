@@ -32,7 +32,7 @@ export function BillingDetailsDrawer({ billing, isOpen, onClose }: BillingDetail
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end">
+    <div className="fixed inset-0 bg-black bg-opacity-10 z-40 flex justify-end">
       <div className="bg-white w-96 h-full flex flex-col shadow-xl">
         {/* Header */}
         <div className="p-6 border-b border-gray-200">

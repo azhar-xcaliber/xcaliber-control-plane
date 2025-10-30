@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { MainContent } from "@/components/main-content"
 import { ActivityDrawer } from "@/components/activity-drawer"
+import { OnboardingModal } from "@/components/onboarding-modal"
 import type { Activity } from "@/types/activity"
+import type { OnboardingData } from "@/types/onboarding"
 
 export default function XCaliberControlPanel() {
   const [selectedPod, setSelectedPod] = useState("prod-east")
@@ -14,6 +16,19 @@ export default function XCaliberControlPanel() {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null)
+
+  useEffect(() => {
+    const stored = localStorage.getItem("xcaliber-onboarding")
+    if (stored) {
+      const data = JSON.parse(stored) as OnboardingData
+      setOnboardingData(data)
+      setShowOnboarding(false)
+    } else {
+      setShowOnboarding(true)
+    }
+  }, [])
 
   const handleActivitySelect = (activity: Activity) => {
     setSelectedActivity(activity)
@@ -25,29 +40,38 @@ export default function XCaliberControlPanel() {
     setSelectedActivity(null)
   }
 
+  const handleOnboardingComplete = (data: OnboardingData) => {
+    setOnboardingData(data)
+    setShowOnboarding(false)
+  }
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar
-        selectedPod={selectedPod}
-        onPodSelect={setSelectedPod}
-        selectedTenant={selectedTenant}
-        onTenantSelect={setSelectedTenant}
-        selectedService={selectedPodService}
-        onServiceSelect={setSelectedPodService}
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={setIsSidebarCollapsed}
-      />
+    <>
+      {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
 
-      <MainContent
-        selectedPod={selectedPod}
-        selectedTenant={selectedTenant}
-        selectedService={selectedPodService}
-        selectedTab={selectedTab}
-        onTabSelect={setSelectedTab}
-        onActivitySelect={handleActivitySelect}
-      />
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar
+          selectedPod={selectedPod}
+          onPodSelect={setSelectedPod}
+          selectedTenant={selectedTenant}
+          onTenantSelect={setSelectedTenant}
+          selectedService={selectedPodService}
+          onServiceSelect={setSelectedPodService}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={setIsSidebarCollapsed}
+        />
 
-      <ActivityDrawer activity={selectedActivity} isOpen={isDrawerOpen} onClose={handleDrawerClose} />
-    </div>
+        <MainContent
+          selectedPod={selectedPod}
+          selectedTenant={selectedTenant}
+          selectedService={selectedPodService}
+          selectedTab={selectedTab}
+          onTabSelect={setSelectedTab}
+          onActivitySelect={handleActivitySelect}
+        />
+
+        <ActivityDrawer activity={selectedActivity} isOpen={isDrawerOpen} onClose={handleDrawerClose} />
+      </div>
+    </>
   )
 }

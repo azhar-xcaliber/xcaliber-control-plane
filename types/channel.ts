@@ -8,37 +8,6 @@ export interface DataChannel {
   createdBy: string
   createdAt: string
   updatedAt: string
-  entityVersion?: number
-  dataChannelListeners?: DataChannelListener[]
-  throughput?: {
-    messagesPerSecond: number
-    bytesPerSecond: number
-    peakThroughput: number
-  }
-  consumers?: Array<{
-    id: string
-    name: string
-    status: string
-    lag: number
-    throughput: number
-  }>
-  partitions?: number
-  retentionPeriod?: string
-  compressionType?: string
-  schema?: {
-    version: string
-    fields: Array<{
-      name: string
-      type: string
-      required: boolean
-    }>
-  }
-  metrics?: {
-    totalMessages: number
-    errorRate: number
-    avgLatency: number
-    availability: number
-  }
 }
 
 export interface DataPipeline {
