@@ -20,14 +20,7 @@ export default function XCaliberControlPanel() {
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null)
 
   useEffect(() => {
-    const stored = localStorage.getItem("xcaliber-onboarding")
-    if (stored) {
-      const data = JSON.parse(stored) as OnboardingData
-      setOnboardingData(data)
-      setShowOnboarding(false)
-    } else {
-      setShowOnboarding(true)
-    }
+    setShowOnboarding(true)
   }, [])
 
   const handleActivitySelect = (activity: Activity) => {

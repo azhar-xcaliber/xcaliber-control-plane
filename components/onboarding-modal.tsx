@@ -39,7 +39,6 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
       tasks: selectedTasks,
       completed: true,
     }
-    localStorage.setItem("xcaliber-onboarding", JSON.stringify(onboardingData))
     onComplete(onboardingData)
   }
 
