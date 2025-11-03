@@ -34,6 +34,7 @@ export default function XCaliberControlPanel() {
   }
 
   const handleOnboardingComplete = (data: OnboardingData) => {
+    console.log("[v0] Onboarding completed with data:", data)
     setOnboardingData(data)
     setShowOnboarding(false)
   }
@@ -52,6 +53,7 @@ export default function XCaliberControlPanel() {
           onServiceSelect={setSelectedPodService}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={setIsSidebarCollapsed}
+          onboardingData={onboardingData}
         />
 
         <MainContent
@@ -61,6 +63,7 @@ export default function XCaliberControlPanel() {
           selectedTab={selectedTab}
           onTabSelect={setSelectedTab}
           onActivitySelect={handleActivitySelect}
+          onboardingData={onboardingData}
         />
 
         <ActivityDrawer activity={selectedActivity} isOpen={isDrawerOpen} onClose={handleDrawerClose} />

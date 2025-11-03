@@ -20,6 +20,7 @@ import { CrmSystemsView } from "@/components/crm-systems-view"
 import { ExternalDatabasesView } from "@/components/external-databases-view"
 import { TenantContextBanner } from "@/components/tenant-context-banner"
 import type { Activity } from "@/types/activity"
+import type { OnboardingData } from "@/types/onboarding"
 
 interface MainContentProps {
   selectedPod: string
@@ -28,6 +29,7 @@ interface MainContentProps {
   selectedTab: string
   onTabSelect: (tab: string) => void
   onActivitySelect: (activity: Activity) => void
+  onboardingData: OnboardingData | null
 }
 
 // Mock tenant data - in real app this would come from props or context
@@ -121,83 +123,82 @@ export function MainContent({
   selectedTab,
   onTabSelect,
   onActivitySelect,
+  onboardingData,
 }: MainContentProps) {
   const currentTenant = mockTenantData[selectedTenant as keyof typeof mockTenantData] || mockTenantData["tenant-1"]
   const currentServiceName = getServiceDisplayName(selectedService)
 
   const renderContent = () => {
-    // Route to different views based on selected service
     switch (selectedService) {
-      // Platform Components (in new order)
       case "overview":
-        return <OverviewDashboard pod={selectedPod} tenant={selectedTenant} />
+        return <OverviewDashboard pod={selectedPod} tenant={selectedTenant} onboardingData={onboardingData} />
 
       case "data-sources":
-        return <DataSourcesView />
+        return <DataSourcesView onboardingData={onboardingData} />
 
       case "channels":
-        return <ChannelsView />
+        return <ChannelsView onboardingData={onboardingData} />
 
       case "hdf":
-        return <HdfView />
+        return <HdfView onboardingData={onboardingData} />
 
       case "data-fabric":
-        return <DataFabricView />
+        return <DataFabricView onboardingData={onboardingData} />
 
       case "data-access":
-        return <DataAccessView />
+        return <DataAccessView onboardingData={onboardingData} />
 
       case "agents":
-        return <AgentsStudio onActivitySelect={onActivitySelect} />
+        return <AgentsStudio onActivitySelect={onActivitySelect} onboardingData={onboardingData} />
 
       case "workflows":
-        return <WorkflowsStudio onActivitySelect={onActivitySelect} />
+        return <WorkflowsStudio onActivitySelect={onActivitySelect} onboardingData={onboardingData} />
 
-      // Co-pilots (Full-scale single-page applications)
       case "playground":
-        return <PlaygroundApp />
+        return <PlaygroundApp onboardingData={onboardingData} />
 
       case "provider-assistant":
-        return <ProviderAssistantApp />
+        return <ProviderAssistantApp onboardingData={onboardingData} />
 
       case "analyst":
-        return <AnalystApp />
+        return <AnalystApp onboardingData={onboardingData} />
 
-      // Enterprise Integrations
       case "kafka-queues":
-        return <KafkaQueuesView />
+        return <KafkaQueuesView onboardingData={onboardingData} />
 
       case "data-lakes":
-        return <DataLakesView />
+        return <DataLakesView onboardingData={onboardingData} />
 
       case "crm-systems":
-        return <CrmSystemsView />
+        return <CrmSystemsView onboardingData={onboardingData} />
 
       case "external-databases":
-        return <ExternalDatabasesView />
+        return <ExternalDatabasesView onboardingData={onboardingData} />
 
-      // Legacy routes for backward compatibility
       case "activity":
-        return <ActivityFeed onActivitySelect={onActivitySelect} pod={selectedPod} tenant={selectedTenant} />
+        return (
+          <ActivityFeed
+            onActivitySelect={onActivitySelect}
+            pod={selectedPod}
+            tenant={selectedTenant}
+            onboardingData={onboardingData}
+          />
+        )
 
       case "api-browser":
-        return <ApiBrowser />
+        return <ApiBrowser onboardingData={onboardingData} />
 
       case "data":
-        return <DataStudio onActivitySelect={onActivitySelect} />
+        return <DataStudio onActivitySelect={onActivitySelect} onboardingData={onboardingData} />
 
-      // Default fallback
       default:
-        return <OverviewDashboard pod={selectedPod} tenant={selectedTenant} />
+        return <OverviewDashboard pod={selectedPod} tenant={selectedTenant} onboardingData={onboardingData} />
     }
   }
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* Tenant Context Banner */}
       <TenantContextBanner tenant={currentTenant} currentComponent={currentServiceName} currentPage="" />
-
-      {/* Main Content */}
       <div className="flex-1 overflow-hidden">{renderContent()}</div>
     </div>
   )

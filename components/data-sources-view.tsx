@@ -6,6 +6,7 @@ import { ConfigurationList } from "@/components/configuration-list"
 import { DetailsDrawer } from "@/components/details-drawer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Database,
   Activity,
@@ -17,8 +18,11 @@ import {
   Plug,
   FileText,
   Calendar,
+  Plus,
 } from "lucide-react"
 import type { DataSource } from "@/types/datasource"
+import { shouldShowFeature, getPriorityFeatures } from "@/lib/module-personalization"
+import type { OnboardingData } from "@/types/onboarding"
 
 const mockDataSources: DataSource[] = [
   {
@@ -559,9 +563,15 @@ const mockConfigurationData = [
   },
 ]
 
-export function DataSourcesView() {
+interface DataSourcesViewProps {
+  onboardingData: OnboardingData | null
+}
+
+export function DataSourcesView({ onboardingData }: DataSourcesViewProps) {
   const [selectedItem, setSelectedItem] = useState<DataSource | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+
+  const priorityFeatures = getPriorityFeatures("dataSources", onboardingData)
 
   const handleItemSelect = (item: DataSource) => {
     setSelectedItem(item)
@@ -647,162 +657,217 @@ export function DataSourcesView() {
 
   const dashboardContent = (
     <div className="p-6 space-y-6">
+      {onboardingData && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <Database className="w-5 h-5 text-blue-600 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-blue-900 mb-1">Data Sources for {onboardingData.role}</h3>
+              <p className="text-sm text-blue-700">
+                {onboardingData.jobs.includes("onboard-practice") &&
+                  "Quickly configure and connect your practice data sources."}
+                {onboardingData.jobs.includes("prepare-dataset") &&
+                  "Manage data sources for your dataset preparation workflows."}
+                {onboardingData.jobs.includes("manage-systems") && "Monitor and maintain your data source connections."}
+                {!onboardingData.jobs.includes("onboard-practice") &&
+                  !onboardingData.jobs.includes("prepare-dataset") &&
+                  !onboardingData.jobs.includes("manage-systems") &&
+                  "Manage your data source configurations and connections."}
+              </p>
+              {priorityFeatures.length > 0 && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xs font-medium text-blue-800">Priority features:</span>
+                  {priorityFeatures.slice(0, 3).map((feature, index) => (
+                    <Badge key={index} className="bg-blue-100 text-blue-800 text-xs">
+                      {feature.replace(/-/g, " ")}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {shouldShowFeature("dataSources", "create", onboardingData) && (
+        <div className="flex justify-end mb-4">
+          <Button onClick={handleCreateNew}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create New Data Source
+          </Button>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Sources</p>
-                <p className="text-2xl font-bold text-gray-900">{mockDataSources.length}</p>
+        {shouldShowFeature("dataSources", "all-sources", onboardingData) && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Sources</p>
+                  <p className="text-2xl font-bold text-gray-900">{mockDataSources.length}</p>
+                </div>
+                <Database className="w-8 h-8 text-blue-500" />
               </div>
-              <Database className="w-8 h-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Live Sources</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {mockDataSources.filter((ds) => ds.lifeCycleStage === "LIVE").length}
-                </p>
+        {shouldShowFeature("dataSources", "monitor", onboardingData) && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Live Sources</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {mockDataSources.filter((ds) => ds.lifeCycleStage === "LIVE").length}
+                  </p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-500" />
               </div>
-              <CheckCircle className="w-8 h-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Active Pipelines</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {mockDataSources.reduce((count, ds) => count + ds.pipelines.length, 0)}
-                </p>
+        {shouldShowFeature("dataSources", "configure", onboardingData) && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Active Pipelines</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {mockDataSources.reduce((count, ds) => count + ds.pipelines.length, 0)}
+                  </p>
+                </div>
+                <Workflow className="w-8 h-8 text-blue-500" />
               </div>
-              <Workflow className="w-8 h-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Issues</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {mockDataSources.filter((ds) => ds.status === "ERROR" || ds.syncStatus === "FAILED").length}
-                </p>
+        {shouldShowFeature("dataSources", "troubleshoot", onboardingData) && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Issues</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {mockDataSources.filter((ds) => ds.status === "ERROR" || ds.syncStatus === "FAILED").length}
+                  </p>
+                </div>
+                <AlertTriangle className="w-8 h-8 text-red-500" />
               </div>
-              <AlertTriangle className="w-8 h-8 text-red-500" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Data Source Types Distribution */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Data Source Types</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {["EPIC", "ATHENA", "POINT_CLICK_CARE", "ELATION", "ECW"].map((type) => {
-              const count = mockDataSources.filter((ds) => ds.type === type).length
-              return (
-                <div key={type} className="text-center p-3 border border-gray-200 rounded-lg">
-                  <Database className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                  <p className="text-lg font-bold text-gray-900">{count}</p>
-                  <p className="text-xs text-gray-600">{type.replace(/_/g, " ")}</p>
-                </div>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
+      {shouldShowFeature("dataSources", "view-sources", onboardingData) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Source Types</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {["EPIC", "ATHENA", "POINT_CLICK_CARE", "ELATION", "ECW"].map((type) => {
+                const count = mockDataSources.filter((ds) => ds.type === type).length
+                return (
+                  <div key={type} className="text-center p-3 border border-gray-200 rounded-lg">
+                    <Database className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                    <p className="text-lg font-bold text-gray-900">{count}</p>
+                    <p className="text-xs text-gray-600">{type.replace(/_/g, " ")}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Data Sources */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Data Sources</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {mockDataSources.slice(0, 3).map((source) => (
-              <div key={source.id} className="p-4 border border-gray-200 rounded-lg">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    <Database className="w-5 h-5 text-gray-400 mt-1" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-gray-900">{source.displayName}</h4>
-                        <Badge variant="outline" className="text-xs">
-                          {source.type}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {source.protocol}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{source.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Workflow className="w-3 h-3" />
-                          {source.pipelines.length} pipelines
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Plug className="w-3 h-3" />
-                          {source.connectors.length} connectors
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <FileText className="w-3 h-3" />
-                          {source.catalog.length} resources
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />v{source.version}
-                        </span>
+      {shouldShowFeature("dataSources", "all-sources", onboardingData) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Data Sources</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {mockDataSources.slice(0, 3).map((source) => (
+                <div key={source.id} className="p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      <Database className="w-5 h-5 text-gray-400 mt-1" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-medium text-gray-900">{source.displayName}</h4>
+                          <Badge variant="outline" className="text-xs">
+                            {source.type}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {source.protocol}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{source.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Workflow className="w-3 h-3" />
+                            {source.pipelines.length} pipelines
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Plug className="w-3 h-3" />
+                            {source.connectors.length} connectors
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <FileText className="w-3 h-3" />
+                            {source.catalog.length} resources
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />v{source.version}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={getLifeCycleColor(source.lifeCycleStage)}>{source.lifeCycleStage}</Badge>
-                    <Badge className={getStatusColor(source.status)}>{source.status}</Badge>
-                    <Badge className={getSyncStatusColor(source.syncStatus)}>
-                      <div className="flex items-center gap-1">
-                        {getSyncStatusIcon(source.syncStatus)}
-                        {source.syncStatus}
-                      </div>
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getLifeCycleColor(source.lifeCycleStage)}>{source.lifeCycleStage}</Badge>
+                      <Badge className={getStatusColor(source.status)}>{source.status}</Badge>
+                      <Badge className={getSyncStatusColor(source.syncStatus)}>
+                        <div className="flex items-center gap-1">
+                          {getSyncStatusIcon(source.syncStatus)}
+                          {source.syncStatus}
+                        </div>
+                      </Badge>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Lifecycle Stage Distribution */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lifecycle Stage Distribution</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-            {["DRAFT", "READY", "LIVE", "PAUSED", "STOPPED", "ARCHIVED"].map((stage) => {
-              const count = mockDataSources.filter((ds) => ds.lifeCycleStage === stage).length
-              return (
-                <div key={stage} className="text-center p-3 border border-gray-200 rounded-lg">
-                  <p className="text-2xl font-bold text-gray-900">{count}</p>
-                  <p className="text-xs text-gray-600 capitalize">{stage.toLowerCase()}</p>
-                </div>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
+      {shouldShowFeature("dataSources", "monitor", onboardingData) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Lifecycle Stage Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+              {["DRAFT", "READY", "LIVE", "PAUSED", "STOPPED", "ARCHIVED"].map((stage) => {
+                const count = mockDataSources.filter((ds) => ds.lifeCycleStage === stage).length
+                return (
+                  <div key={stage} className="text-center p-3 border border-gray-200 rounded-lg">
+                    <p className="text-2xl font-bold text-gray-900">{count}</p>
+                    <p className="text-xs text-gray-600 capitalize">{stage.toLowerCase()}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 
